@@ -27,7 +27,7 @@ const ThemedApp = () => {
   return (
     <>
       <StatusBar 
-        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
         backgroundColor={isDarkMode ? theme.secondary : theme.primary}
       />
       <NavigationContainer theme={navigationTheme}>

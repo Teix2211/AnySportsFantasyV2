@@ -63,7 +63,7 @@ const TeamSelectionScreen = ({ navigation }) => {
         });
       }
     }
-  }, [userTeam, dispatch]);
+  }, [userTeam, dispatch, selectedDrivers]);
   
   // Update display drivers when drivers change or sort option changes
   useEffect(() => {

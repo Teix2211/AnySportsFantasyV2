@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLatestNews } from '../../store/actions';
@@ -23,21 +23,21 @@ const HomeScreen = () => {
   
   const [refreshing, setRefreshing] = React.useState(false);
 
+  const loadData = useCallback(() => {
+    dispatch(fetchRaces('2024'));
+    dispatch(fetchLatestNews());
+    dispatch(fetchUserTeam());
+  }, [dispatch]);
+
   useEffect(() => {
     loadData();
-  }, [user?.id]); // Reload when user changes
+  }, [loadData, user?.id]);
 
-  const loadData = () => {
-    dispatch(fetchRaces('2024')); // This will also set upcomingRace
-    dispatch(fetchLatestNews());
-    dispatch(fetchUserTeam()); // This now fetches the team for the current user
-  };
-
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadData();
     setRefreshing(false);
-  }, []);
+  }, [loadData]);
 
   if (racesLoading && newsLoading && teamLoading) {
     return <LoadingIndicator />;

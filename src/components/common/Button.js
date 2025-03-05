@@ -1,27 +1,18 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../../context/ThemeContext';
 
 const Button = ({ title, onPress, disabled, style }) => {
-  const { isDarkMode } = useTheme();
-  
   return (
     <TouchableOpacity
       style={[
         styles.button,
         disabled && styles.buttonDisabled,
-        style
+        style,
       ]}
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={[
-        styles.text, 
-        disabled && [
-          styles.textDisabled,
-          { color: isDarkMode ? '#aaaaaa' : '#888888' }
-        ]
-      ]}>
+      <Text style={[styles.text, disabled && styles.textDisabled]}>
         {title}
       </Text>
     </TouchableOpacity>

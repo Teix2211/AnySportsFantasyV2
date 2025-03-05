@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLeaderboard } from '../../store/actions';
@@ -13,14 +13,14 @@ const LeaderboardScreen = () => {
   const { leaderboard, loading } = useSelector(state => state.leaderboard);
   const [leaderboardType, setLeaderboardType] = useState(0);
   
-  useEffect(() => {
-    loadData();
-  }, [leaderboardType]);
-  
-  const loadData = () => {
+  const loadData = useCallback(() => {
     const type = leaderboardType === 0 ? 'global' : leaderboardType === 1 ? 'friends' : 'leagues';
     dispatch(fetchLeaderboard(type));
-  };
+  }, [dispatch, leaderboardType]);
+  
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   
   const renderItem = ({ item, index }) => (
     <LeaderboardItem 
