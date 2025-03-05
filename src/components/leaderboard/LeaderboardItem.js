@@ -1,13 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 const LeaderboardItem = ({ rank, team }) => {
+  const { theme, isDarkMode } = useTheme();
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.rank}>{rank}</Text>
+    <View style={[styles.container, { 
+      backgroundColor: theme.card,
+      borderBottomColor: theme.border
+    }]}>
+      <Text style={[styles.rank, { color: theme.text }]}>{rank}</Text>
       <View style={styles.teamInfo}>
-        <Text style={styles.teamName}>{team.name}</Text>
-        <Text style={styles.owner}>{team.owner}</Text>
+        <Text style={[styles.teamName, { color: theme.text }]}>{team.name}</Text>
+        <Text style={[styles.owner, { color: theme.textSecondary }]}>{team.owner}</Text>
       </View>
       <Text style={styles.points}>{team.points}</Text>
     </View>

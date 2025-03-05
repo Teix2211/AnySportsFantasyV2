@@ -5,9 +5,11 @@ import { fetchLeaderboard } from '../../store/actions';
 import LeaderboardItem from '../../components/leaderboard/LeaderboardItem';
 import SegmentedControl from '../../components/common/SegmentedControl';
 import LoadingIndicator from '../../components/common/LoadingIndicator';
+import { useTheme } from '../../context/ThemeContext';
 
 const LeaderboardScreen = () => {
   const dispatch = useDispatch();
+  const { theme, isDarkMode } = useTheme();
   const { leaderboard, loading } = useSelector(state => state.leaderboard);
   const [leaderboardType, setLeaderboardType] = useState(0);
   
@@ -32,7 +34,7 @@ const LeaderboardScreen = () => {
   }
   
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Leaderboard</Text>
         <SegmentedControl
@@ -49,16 +51,18 @@ const LeaderboardScreen = () => {
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={() => (
-            <View style={styles.listHeader}>
-              <Text style={styles.rankHeader}>Rank</Text>
-              <Text style={styles.teamHeader}>Team</Text>
-              <Text style={styles.pointsHeader}>Points</Text>
+            <View style={[styles.listHeader, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}>
+              <Text style={[styles.rankHeader, { color: theme.textSecondary }]}>Rank</Text>
+              <Text style={[styles.teamHeader, { color: theme.textSecondary }]}>Team</Text>
+              <Text style={[styles.pointsHeader, { color: theme.textSecondary }]}>Points</Text>
             </View>
           )}
         />
       ) : (
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No leaderboard data available</Text>
+          <Text style={[styles.noDataText, { color: theme.textSecondary }]}>
+            No leaderboard data available
+          </Text>
         </View>
       )}
     </View>

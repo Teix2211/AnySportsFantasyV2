@@ -1,49 +1,73 @@
-// src/components/team-selection/SelectedDriversList.js
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
 
-const DriverItem = ({ driver, onRemove }) => (
-  <View style={styles.driverItem}>
-    <Image 
-      source={{ uri: driver.imageUrl || 'https://via.placeholder.com/40?text=F1' }} 
-      style={styles.driverImage} 
-    />
-    <View style={styles.driverInfo}>
-      <Text style={styles.driverName}>{driver.firstName} {driver.lastName}</Text>
-      <Text style={styles.driverTeam}>{driver.team}</Text>
+const DriverItem = ({ driver, onRemove }) => {
+  const { theme } = useTheme();
+  
+  return (
+    <View style={styles.driverItem}>
+      <Image 
+        source={{ uri: driver.imageUrl || 'https://via.placeholder.com/40?text=F1' }} 
+        style={styles.driverImage} 
+      />
+      <View style={styles.driverInfo}>
+        <Text style={[styles.driverName, { color: theme.text }]}>
+          {driver.firstName} {driver.lastName}
+        </Text>
+        <Text style={[styles.driverTeam, { color: theme.textSecondary }]}>
+          {driver.team}
+        </Text>
+      </View>
+      <Text style={styles.driverPrice}>${driver.price}M</Text>
+      <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
+        <Icon name="close-circle" size={22} color="#e10600" />
+      </TouchableOpacity>
     </View>
-    <Text style={styles.driverPrice}>${driver.price}M</Text>
-    <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
-      <Icon name="close-circle" size={22} color="#e10600" />
-    </TouchableOpacity>
-  </View>
-);
+  );
+};
 
 const SelectedDriversList = ({ drivers, onRemoveDriver }) => {
+  const { theme, isDarkMode } = useTheme();
+  
   if (drivers.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No drivers selected yet</Text>
-        <Text style={styles.emptySub}>Select drivers from the list below</Text>
+      <View style={[styles.emptyContainer, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+          No drivers selected yet
+        </Text>
+        <Text style={[styles.emptySub, { color: theme.textSecondary }]}>
+          Select drivers from the list below
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Selected Drivers</Text>
-      <FlatList
-        data={drivers}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
+    <View style={[styles.container, { 
+      backgroundColor: theme.card,
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOpacity: isDarkMode ? 0.3 : 0.1 
+    }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Selected Drivers</Text>
+      
+      {/* Render drivers directly instead of using FlatList */}
+      {drivers.map((driver, index) => (
+        <React.Fragment key={driver.id.toString()}>
           <DriverItem 
-            driver={item} 
-            onRemove={() => onRemoveDriver(item)}
+            driver={driver} 
+            onRemove={() => onRemoveDriver(driver)}
           />
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+          {index < drivers.length - 1 && (
+            <View style={[styles.separator, { backgroundColor: theme.border }]} />
+          )}
+        </React.Fragment>
+      ))}
     </View>
   );
 };

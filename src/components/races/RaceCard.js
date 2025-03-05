@@ -1,22 +1,34 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { format } from 'date-fns';
+import { useTheme } from '../../context/ThemeContext';
 
 const RaceCard = ({ race, onPress }) => {
+  const { theme, isDarkMode } = useTheme();
   const raceDate = new Date(race.date);
   const isPastRace = raceDate < new Date();
   
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.dateContainer}>
-        <Text style={styles.day}>{format(raceDate, 'd')}</Text>
-        <Text style={styles.month}>{format(raceDate, 'MMM')}</Text>
+    <TouchableOpacity 
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.card,
+          shadowColor: isDarkMode ? '#000' : '#000',
+          shadowOpacity: isDarkMode ? 0.3 : 0.1
+        }
+      ]} 
+      onPress={onPress}
+    >
+      <View style={[styles.dateContainer, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}>
+        <Text style={[styles.day, { color: theme.text }]}>{format(raceDate, 'd')}</Text>
+        <Text style={[styles.month, { color: theme.textSecondary }]}>{format(raceDate, 'MMM')}</Text>
       </View>
       
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{race.name}</Text>
-        <Text style={styles.circuit}>{race.circuit}</Text>
-        <Text style={styles.location}>{race.location}</Text>
+        <Text style={[styles.name, { color: theme.text }]}>{race.name}</Text>
+        <Text style={[styles.circuit, { color: theme.textSecondary }]}>{race.circuit}</Text>
+        <Text style={[styles.location, { color: theme.textSecondary }]}>{race.location}</Text>
       </View>
       
       <View style={styles.statusContainer}>
@@ -29,7 +41,7 @@ const RaceCard = ({ race, onPress }) => {
             <Text style={styles.upcomingText}>Upcoming</Text>
           </View>
         )}
-        <Text style={styles.arrow}>›</Text>
+        <Text style={[styles.arrow, { color: isDarkMode ? '#777' : '#ccc' }]}>›</Text>
       </View>
     </TouchableOpacity>
   );

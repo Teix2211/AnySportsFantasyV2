@@ -1,6 +1,27 @@
 import { createStore, applyMiddleware } from 'redux';
 import rootReducer from './reducers';
 
+// Create a custom thunk middleware
+const thunkMiddleware = store => next => action => {
+  if (typeof action === 'function') {
+    return action(store.dispatch, store.getState);
+  }
+  return next(action);
+};
+
+// Create store with custom thunk middleware
+const store = createStore(
+  rootReducer,
+  applyMiddleware(thunkMiddleware)
+);
+
+export default store;
+
+
+
+/* import { createStore, applyMiddleware } from 'redux';
+import rootReducer from './reducers';
+
 // Create store with a more defensive approach
 const configureStore = () => {
   // Import thunk directly to avoid undefined issues
@@ -18,4 +39,4 @@ const configureStore = () => {
 
 // Create and export the store
 const store = configureStore();
-export default store;
+export default store; */

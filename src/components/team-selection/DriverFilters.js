@@ -2,18 +2,38 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
 
-const SortOption = ({ title, isActive, onPress, iconName }) => (
-  <TouchableOpacity 
-    style={[styles.sortOption, isActive && styles.activeSortOption]} 
-    onPress={onPress}
-  >
-    <Icon name={iconName} size={16} color={isActive ? '#fff' : '#666'} />
-    <Text style={[styles.sortText, isActive && styles.activeSortText]}>{title}</Text>
-  </TouchableOpacity>
-);
+const SortOption = ({ title, isActive, onPress, iconName }) => {
+  const { theme, isDarkMode } = useTheme();
+  
+  return (
+    <TouchableOpacity 
+      style={[
+        styles.sortOption, 
+        { backgroundColor: isDarkMode ? (isActive ? theme.primary : '#2c2c2c') : (isActive ? theme.primary : '#f5f5f5') },
+      ]} 
+      onPress={onPress}
+    >
+      <Icon 
+        name={iconName} 
+        size={16} 
+        color={isActive ? '#fff' : (isDarkMode ? '#aaa' : '#666')} 
+      />
+      <Text 
+        style={[
+          styles.sortText, 
+          { color: isActive ? '#fff' : (isDarkMode ? '#aaa' : '#666') }
+        ]}
+      >
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 const DriverFilters = ({ onSortChange }) => {
+  const { theme, isDarkMode } = useTheme();
   const [activeSort, setActiveSort] = useState('price-desc');
 
   const handleSortChange = (sortOption) => {
@@ -22,8 +42,12 @@ const DriverFilters = ({ onSortChange }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sort By:</Text>
+    <View style={[styles.container, { 
+      backgroundColor: theme.card,
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOpacity: isDarkMode ? 0.3 : 0.1 
+    }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Sort By:</Text>
       <View style={styles.sortOptions}>
         <SortOption 
           title="Price ↑" 
@@ -84,16 +108,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#f5f5f5',
   },
-  activeSortOption: {
-    backgroundColor: '#e10600',
-  },
   sortText: {
     fontSize: 12,
     marginLeft: 4,
     color: '#666',
-  },
-  activeSortText: {
-    color: '#fff',
   },
 });
 

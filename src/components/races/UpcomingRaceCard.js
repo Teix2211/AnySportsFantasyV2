@@ -1,15 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 const UpcomingRaceCard = ({ race }) => {
   const navigation = useNavigation();
+  const { theme, isDarkMode } = useTheme();
   
   // If no race is provided, show placeholder
   if (!race) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.noRaceText}>No upcoming race information available</Text>
+      <View style={[styles.container, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.noRaceText, { color: theme.textSecondary }]}>
+          No upcoming race information available
+        </Text>
       </View>
     );
   }
@@ -18,7 +26,11 @@ const UpcomingRaceCard = ({ race }) => {
   
   return (
     <TouchableOpacity 
-      style={styles.container}
+      style={[styles.container, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}
       onPress={() => navigation.navigate('RaceDetail', { raceId: race.id })}
     >
       <View style={styles.dateContainer}>
@@ -27,15 +39,15 @@ const UpcomingRaceCard = ({ race }) => {
       </View>
       
       <View style={styles.infoContainer}>
-        <Text style={styles.raceName}>{race.name || "Grand Prix"}</Text>
-        <Text style={styles.circuit}>{race.circuit || "Circuit"}</Text>
+        <Text style={[styles.raceName, { color: theme.text }]}>{race.name || "Grand Prix"}</Text>
+        <Text style={[styles.circuit, { color: theme.textSecondary }]}>{race.circuit || "Circuit"}</Text>
         <Text style={styles.countdown}>
           {race.daysUntil ? `${race.daysUntil} days to go` : "Coming soon"}
         </Text>
       </View>
       
       <View style={styles.arrowContainer}>
-        <Text style={styles.arrow}>›</Text>
+        <Text style={[styles.arrow, { color: isDarkMode ? '#777' : '#ccc' }]}>›</Text>
       </View>
     </TouchableOpacity>
   );

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
 
 // Import actions
 import { selectDriver, removeDriver } from '../../store/actions/driverActions';
@@ -19,6 +20,7 @@ import { TEAM_BUDGET, MAX_DRIVERS } from '../../constants';
 
 const DriverDetailScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
+  const { theme, isDarkMode } = useTheme();
   const driverId = route.params?.driverId;
   
   // Redux state
@@ -67,14 +69,14 @@ const DriverDetailScreen = ({ route, navigation }) => {
   
   if (!driver) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading driver details...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.text }}>Loading driver details...</Text>
       </View>
     );
   }
   
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header with driver info */}
       <View style={styles.header}>
         <Image 
@@ -89,48 +91,56 @@ const DriverDetailScreen = ({ route, navigation }) => {
       </View>
       
       {/* Stats section */}
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Season Statistics</Text>
+      <View style={[styles.statsContainer, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Season Statistics</Text>
         
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{driver.points}</Text>
-            <Text style={styles.statLabel}>Points</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Points</Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{driver.form}/10</Text>
-            <Text style={styles.statLabel}>Form</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Form</Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statValue}>13</Text>
-            <Text style={styles.statLabel}>Races</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Races</Text>
           </View>
         </View>
         
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{Math.floor(driver.points / 25)}</Text>
-            <Text style={styles.statLabel}>Wins</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Wins</Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{Math.floor(driver.points / 15)}</Text>
-            <Text style={styles.statLabel}>Podiums</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Podiums</Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{Math.floor(Math.random() * 5)}</Text>
-            <Text style={styles.statLabel}>DNFs</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>DNFs</Text>
           </View>
         </View>
       </View>
       
       {/* Performance Trends */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Performance</Text>
-        <Text style={styles.performanceText}>
+      <View style={[styles.section, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Performance</Text>
+        <Text style={[styles.performanceText, { color: theme.text }]}>
           {driver.firstName} {driver.lastName} has been {driver.form > 7 ? 'performing well' : 'struggling'} recently,
           with {driver.form > 7 ? 'strong' : 'inconsistent'} results in the last few races.
           Based on current form, this driver is {driver.form > 8 ? 'an excellent choice' : 
@@ -139,10 +149,14 @@ const DriverDetailScreen = ({ route, navigation }) => {
       </View>
       
       {/* Value Assessment */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Value Assessment</Text>
+      <View style={[styles.section, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Value Assessment</Text>
         <View style={styles.valueContainer}>
-          <View style={styles.valueBar}>
+          <View style={[styles.valueBar, { backgroundColor: isDarkMode ? '#444' : '#f0f0f0' }]}>
             <View 
               style={[
                 styles.valueIndicator, 
@@ -150,7 +164,7 @@ const DriverDetailScreen = ({ route, navigation }) => {
               ]} 
             />
           </View>
-          <Text style={styles.valueText}>
+          <Text style={[styles.valueText, { color: theme.text }]}>
             {driver.points / driver.price > 10 ? 'Excellent value' : 
             driver.points / driver.price > 7 ? 'Good value' : 'Average value'}
           </Text>

@@ -6,12 +6,46 @@ import {
   SAVE_TEAM,
   RESET_TEAM
 } from '../actions/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const initialState = {
   selectedDrivers: [],
   teamName: '',
   teamSaved: false,
-  error: null
+  userTeam: null,
+  error: null,
+  loading: false
+};
+
+// Helper to save team data for the current user
+const saveTeamToStorage = async (team, userId) => {
+  try {
+    // Store teams by user ID
+    const teamsStr = await AsyncStorage.getItem('fantasy_teams');
+    const teams = teamsStr ? JSON.parse(teamsStr) : {};
+    
+    // Update this user's team
+    teams[userId] = team;
+    
+    // Save back to storage
+    await AsyncStorage.setItem('fantasy_teams', JSON.stringify(teams));
+  } catch (e) {
+    console.error('Error saving team to storage', e);
+  }
+};
+
+// Helper to load team data for a specific user
+export const loadTeamFromStorage = async (userId) => {
+  try {
+    const teamsStr = await AsyncStorage.getItem('fantasy_teams');
+    if (!teamsStr) return null;
+    
+    const teams = JSON.parse(teamsStr);
+    return teams[userId] || null;
+  } catch (e) {
+    console.error('Error loading team from storage', e);
+    return null;
+  }
 };
 
 export default function(state = initialState, action) {
@@ -45,17 +79,45 @@ export default function(state = initialState, action) {
       };
       
     case SAVE_TEAM:
+      // Create a team object with user info
+      const userTeam = {
+        id: action.payload?.userId || 1,
+        name: state.teamName,
+        totalPoints: state.selectedDrivers.reduce((sum, driver) => sum + driver.points, 0),
+        rank: Math.floor(Math.random() * 1000) + 1, // Random rank for demo
+        totalValue: state.selectedDrivers.reduce((sum, driver) => sum + driver.price, 0),
+        form: Math.floor(Math.random() * 10) + 1, // Random form for demo
+        drivers: state.selectedDrivers,
+        userId: action.payload?.userId || 1
+      };
+      
+      // Save team to AsyncStorage
+      if (action.payload?.userId) {
+        saveTeamToStorage(userTeam, action.payload.userId);
+      }
+      
       return {
         ...state,
-        teamSaved: true
+        teamSaved: true,
+        userTeam: userTeam
       };
       
     case RESET_TEAM:
       return {
+        ...initialState
+      };
+      
+    case 'FETCH_USER_TEAM':
+      return {
         ...state,
-        selectedDrivers: [],
-        teamName: '',
-        teamSaved: false
+        userTeam: action.payload,
+        loading: false
+      };
+      
+    case 'FETCH_USER_TEAM_START':
+      return {
+        ...state,
+        loading: true
       };
       
     default:

@@ -2,11 +2,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
 
 const DriverCard = ({ driver, isSelected, onPress, onViewDetails }) => {
+  const { theme, isDarkMode } = useTheme();
+  
   return (
     <TouchableOpacity 
-      style={[styles.container, isSelected && styles.selectedContainer]}
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.card,
+          shadowColor: isDarkMode ? '#000' : '#000',
+          shadowOpacity: isDarkMode ? 0.3 : 0.1
+        },
+        isSelected && [
+          styles.selectedContainer,
+          { borderColor: theme.primary }
+        ]
+      ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -16,11 +30,19 @@ const DriverCard = ({ driver, isSelected, onPress, onViewDetails }) => {
       />
       
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{driver.firstName} {driver.lastName}</Text>
-        <Text style={styles.team}>{driver.team}</Text>
+        <Text style={[styles.name, { color: theme.text }]}>
+          {driver.firstName} {driver.lastName}
+        </Text>
+        <Text style={[styles.team, { color: theme.textSecondary }]}>
+          {driver.team}
+        </Text>
         <View style={styles.statsRow}>
-          <Text style={styles.stat}>Points: {driver.points}</Text>
-          <Text style={styles.stat}>Form: {driver.form}/10</Text>
+          <Text style={[styles.stat, { color: theme.textSecondary }]}>
+            Points: {driver.points}
+          </Text>
+          <Text style={[styles.stat, { color: theme.textSecondary }]}>
+            Form: {driver.form}/10
+          </Text>
         </View>
       </View>
       

@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 // Import components
 import DriverCard from '../../components/drivers/DriverCard';
@@ -21,27 +23,47 @@ import DriverFilters from '../../components/team-selection/DriverFilters';
 
 // Import actions
 import { fetchDrivers, selectDriver, removeDriver } from '../../store/actions/driverActions';
-import { setTeamName, saveTeam } from '../../store/actions/teamActions';
+import { setTeamName, saveTeam, fetchUserTeam } from '../../store/actions/teamActions';
 
 // Import constants
 import { TEAM_BUDGET, MAX_DRIVERS } from '../../constants';
 
 const TeamSelectionScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const { theme, isDarkMode } = useTheme();
+  const { user } = useAuth();
   
   // Redux state
   const { drivers, loading: driversLoading } = useSelector(state => state.drivers);
-  const { selectedDrivers, teamName, teamSaved } = useSelector(state => state.team);
+  const { selectedDrivers, teamName, teamSaved, userTeam } = useSelector(state => state.team);
   
   // Local state
   const [displayDrivers, setDisplayDrivers] = useState([]);
   const [remainingBudget, setRemainingBudget] = useState(TEAM_BUDGET);
   const [sortOption, setSortOption] = useState('price-desc');
   
-  // Fetch drivers on mount
+  // Fetch drivers on mount and when user changes
   useEffect(() => {
     dispatch(fetchDrivers());
-  }, [dispatch]);
+    dispatch(fetchUserTeam());
+  }, [dispatch, user?.id]);
+  
+  // If user has a team, load it into the editor
+  useEffect(() => {
+    if (userTeam && userTeam.name && userTeam.drivers && userTeam.drivers.length > 0) {
+      // Set team name
+      dispatch(setTeamName(userTeam.name));
+      
+      // Add each driver to selection (if not already there)
+      if (selectedDrivers.length === 0) {
+        userTeam.drivers.forEach(driver => {
+          if (!selectedDrivers.some(d => d.id === driver.id)) {
+            dispatch(selectDriver(driver));
+          }
+        });
+      }
+    }
+  }, [userTeam, dispatch]);
   
   // Update display drivers when drivers change or sort option changes
   useEffect(() => {
@@ -146,15 +168,15 @@ const TeamSelectionScreen = ({ navigation }) => {
   // Show loading indicator while fetching drivers
   if (driversLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color="#e10600" />
-        <Text style={styles.loadingText}>Loading drivers...</Text>
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading drivers...</Text>
       </View>
     );
   }
   
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Build Your F1 Dream Team</Text>
@@ -185,7 +207,7 @@ const TeamSelectionScreen = ({ navigation }) => {
         <DriverFilters onSortChange={setSortOption} />
         
         {/* Available Drivers List */}
-        <Text style={styles.sectionTitle}>Available Drivers</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
         {displayDrivers.map(driver => (
           <DriverCard 
             key={driver.id}
@@ -198,7 +220,10 @@ const TeamSelectionScreen = ({ navigation }) => {
       </ScrollView>
       
       {/* Save Team Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { 
+        backgroundColor: theme.card,
+        borderTopColor: theme.border
+      }]}>
         <TouchableOpacity 
           style={[styles.saveButton, 
             (selectedDrivers.length < MAX_DRIVERS || !teamName.trim()) && styles.saveButtonDisabled

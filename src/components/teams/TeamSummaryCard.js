@@ -1,14 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 const TeamSummaryCard = ({ team }) => {
   const navigation = useNavigation();
+  const { theme, isDarkMode } = useTheme();
   
   if (!team) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.placeholderText}>
+      <View style={[styles.container, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
           You haven't created a team yet. Go to the Team section to create your dream team!
         </Text>
         <TouchableOpacity 
@@ -22,9 +28,13 @@ const TeamSummaryCard = ({ team }) => {
   }
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.teamName}>{team.name || "Your Team"}</Text>
+    <View style={[styles.container, { 
+      backgroundColor: theme.card,
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOpacity: isDarkMode ? 0.3 : 0.1 
+    }]}>
+      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.teamName, { color: theme.text }]}>{team.name || "Your Team"}</Text>
         <Text style={styles.points}>{team.totalPoints || 0} PTS</Text>
       </View>
       
@@ -32,37 +42,37 @@ const TeamSummaryCard = ({ team }) => {
         {team.drivers && team.drivers.length > 0 ? (
           team.drivers.map((driver, index) => (
             <View key={index} style={styles.driverItem}>
-              <View style={styles.driverCircle}>
-                <Text style={styles.driverInitial}>
+              <View style={[styles.driverCircle, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}>
+                <Text style={[styles.driverInitial, { color: theme.text }]}>
                   {driver.lastName ? driver.lastName.charAt(0) : "?"}
                 </Text>
               </View>
               <View style={styles.driverInfo}>
-                <Text style={styles.driverName}>{driver.lastName || "Driver"}</Text>
-                <Text style={styles.driverTeam}>{driver.team || "Team"}</Text>
+                <Text style={[styles.driverName, { color: theme.text }]}>{driver.lastName || "Driver"}</Text>
+                <Text style={[styles.driverTeam, { color: theme.textSecondary }]}>{driver.team || "Team"}</Text>
               </View>
               <Text style={styles.driverPoints}>{driver.points || 0} pts</Text>
             </View>
           ))
         ) : (
-          <Text style={styles.noDriversText}>No drivers selected</Text>
+          <Text style={[styles.noDriversText, { color: theme.textSecondary }]}>No drivers selected</Text>
         )}
       </View>
       
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: theme.border }]}>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Rank</Text>
-          <Text style={styles.statValue}>#{team.rank || "-"}</Text>
+          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Rank</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>#{team.rank || "-"}</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Value</Text>
-          <Text style={styles.statValue}>${team.totalValue || 0}M</Text>
+          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Value</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>${team.totalValue || 0}M</Text>
         </View>
         <TouchableOpacity 
-          style={styles.viewButton}
+          style={[styles.viewButton, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}
           onPress={() => navigation.navigate('My Team')}
         >
-          <Text style={styles.viewText}>View Team</Text>
+          <Text style={[styles.viewText, { color: isDarkMode ? theme.primary : '#333' }]}>View Team</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -149,6 +159,7 @@ const styles = StyleSheet.create({
   driverPoints: {
     fontSize: 14,
     fontWeight: '500',
+    color: '#e10600',
   },
   noDriversText: {
     fontStyle: 'italic',

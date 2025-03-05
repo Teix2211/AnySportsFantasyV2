@@ -1,35 +1,36 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUpcomingRace, fetchLatestNews, fetchUserTeam } from '../../store/actions';
+import { fetchLatestNews } from '../../store/actions';
+import { fetchRaces } from '../../store/actions/raceActions';
+import { fetchUserTeam } from '../../store/actions/teamActions';
 import UpcomingRaceCard from '../../components/races/UpcomingRaceCard';
 import NewsCard from '../../components/common/NewsCard';
 import TeamSummaryCard from '../../components/teams/TeamSummaryCard';
 import LoadingIndicator from '../../components/common/LoadingIndicator';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const HomeScreen = () => {
   const dispatch = useDispatch();
+  const { theme, isDarkMode } = useTheme();
+  const { user } = useAuth();
   
   // Get data from Redux store
-  const upcomingRace = useSelector(state => state.races?.upcomingRace);
-  const news = useSelector(state => state.news?.news);
-  const userTeam = useSelector(state => state.team?.userTeam);
-  
-  // Loading states
-  const racesLoading = useSelector(state => state.races?.loading);
-  const newsLoading = useSelector(state => state.news?.loading);
-  const teamLoading = useSelector(state => state.team?.loading);
+  const { upcomingRace, loading: racesLoading } = useSelector(state => state.races);
+  const { news, loading: newsLoading } = useSelector(state => state.news || { news: [], loading: false });
+  const { userTeam, loading: teamLoading } = useSelector(state => state.team);
   
   const [refreshing, setRefreshing] = React.useState(false);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.id]); // Reload when user changes
 
   const loadData = () => {
-    dispatch(fetchUpcomingRace());
+    dispatch(fetchRaces('2024')); // This will also set upcomingRace
     dispatch(fetchLatestNews());
-    dispatch(fetchUserTeam());
+    dispatch(fetchUserTeam()); // This now fetches the team for the current user
   };
 
   const onRefresh = React.useCallback(() => {
@@ -44,29 +45,36 @@ const HomeScreen = () => {
 
   return (
     <ScrollView 
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      style={[styles.container, { backgroundColor: theme.background }]}
+      refreshControl={
+        <RefreshControl 
+          refreshing={refreshing} 
+          onRefresh={onRefresh} 
+          tintColor={theme.primary}
+          colors={[theme.primary]}
+        />
+      }
     >
-      <Text style={styles.welcomeText}>Fantasy F1</Text>
+      <Text style={[styles.welcomeText, { color: theme.primary }]}>Fantasy F1</Text>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Upcoming Race</Text>
+      <View style={[styles.section, { backgroundColor: theme.card }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Upcoming Race</Text>
         <UpcomingRaceCard race={upcomingRace} />
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Team</Text>
+      <View style={[styles.section, { backgroundColor: theme.card }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Team</Text>
         <TeamSummaryCard team={userTeam} />
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Latest News</Text>
+      <View style={[styles.section, { backgroundColor: theme.card }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Latest News</Text>
         {news && news.length > 0 ? (
           news.slice(0, 3).map(item => (
             <NewsCard key={item.id} news={item} />
           ))
         ) : (
-          <Text style={styles.noDataText}>No news available</Text>
+          <Text style={[styles.noDataText, { color: theme.textSecondary }]}>No news available</Text>
         )}
       </View>
     </ScrollView>

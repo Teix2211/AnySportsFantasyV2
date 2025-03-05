@@ -1,40 +1,76 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  ActivityIndicator,
+  Alert
+} from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { login, loading, error } = useAuth();
+  const { theme, isDarkMode } = useTheme();
 
-  const handleLogin = () => {
-    // In a real app, dispatch login action
-    console.log('Login attempt with:', { email, password });
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+    
+    const success = await login(email, password);
+    
+    if (!success && error) {
+      Alert.alert('Login Failed', error);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#15151e' }]}>
       <Text style={styles.title}>Fantasy F1</Text>
       <Text style={styles.subtitle}>Login</Text>
       
       <View style={styles.inputContainer}>
         <TextInput 
-          style={styles.input}
+          style={[styles.input, { 
+            backgroundColor: isDarkMode ? '#2c2c2c' : '#fff',
+            color: isDarkMode ? '#fff' : '#000'
+          }]}
           placeholder="Email"
+          placeholderTextColor={isDarkMode ? '#888' : '#aaa'}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
         <TextInput 
-          style={styles.input}
+          style={[styles.input, { 
+            backgroundColor: isDarkMode ? '#2c2c2c' : '#fff',
+            color: isDarkMode ? '#fff' : '#000'
+          }]}
           placeholder="Password"
+          placeholderTextColor={isDarkMode ? '#888' : '#aaa'}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
       </View>
       
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Login</Text>
+        )}
       </TouchableOpacity>
       
       <TouchableOpacity 
@@ -76,6 +112,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     width: '100%',
+    color: '#000',
   },
   button: {
     backgroundColor: '#e10600',

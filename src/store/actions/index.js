@@ -51,59 +51,10 @@ export const fetchLatestNews = () => {
 };
 
 export const fetchUserTeam = () => {
-  // In a real app, this would make an API call
+  // Initially return null to indicate no team exists yet
   return {
     type: FETCH_USER_TEAM,
-    payload: {
-      id: 1,
-      name: 'Speed Demons',
-      totalPoints: 356,
-      rank: 1243,
-      totalValue: 95.5,
-      form: 12,
-      drivers: [
-        {
-          id: 1,
-          firstName: 'Max',
-          lastName: 'Verstappen',
-          team: 'Red Bull Racing',
-          points: 125,
-          price: 30.5
-        },
-        {
-          id: 2,
-          firstName: 'Lewis',
-          lastName: 'Hamilton',
-          team: 'Mercedes',
-          points: 95,
-          price: 28.0
-        },
-        {
-          id: 3,
-          firstName: 'Charles',
-          lastName: 'Leclerc',
-          team: 'Ferrari',
-          points: 88,
-          price: 24.5
-        },
-        {
-          id: 7,
-          firstName: 'Lando',
-          lastName: 'Norris',
-          team: 'McLaren',
-          points: 48,
-          price: 19.5
-        },
-        {
-          id: 11,
-          firstName: 'Yuki',
-          lastName: 'Tsunoda',
-          team: 'RB',
-          points: 0,
-          price: 8.0
-        }
-      ]
-    }
+    payload: null
   };
 };
 

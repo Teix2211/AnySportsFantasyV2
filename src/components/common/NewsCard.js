@@ -1,25 +1,36 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 const NewsCard = ({ news }) => {
+  const { theme, isDarkMode } = useTheme();
+  
   if (!news) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.placeholderText}>News item not available</Text>
+      <View style={[styles.container, { 
+        backgroundColor: theme.card,
+        shadowColor: isDarkMode ? '#000' : '#000',
+        shadowOpacity: isDarkMode ? 0.3 : 0.1 
+      }]}>
+        <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>News item not available</Text>
       </View>
     );
   }
   
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity style={[styles.container, { 
+      backgroundColor: theme.card,
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOpacity: isDarkMode ? 0.3 : 0.1 
+    }]}>
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
           {news.title || "News Title"}
         </Text>
-        <Text style={styles.summary} numberOfLines={2}>
+        <Text style={[styles.summary, { color: theme.textSecondary }]} numberOfLines={2}>
           {news.summary || "News summary will appear here."}
         </Text>
-        <Text style={styles.date}>
+        <Text style={[styles.date, { color: theme.textSecondary }]}>
           {news.date ? new Date(news.date).toLocaleDateString() : "Recent"}
         </Text>
       </View>
@@ -27,8 +38,8 @@ const NewsCard = ({ news }) => {
       {news.imageUrl ? (
         <Image source={{ uri: news.imageUrl }} style={styles.image} />
       ) : (
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.placeholderText}>Image</Text>
+        <View style={[styles.imagePlaceholder, { backgroundColor: isDarkMode ? '#2c2c2c' : '#eee' }]}>
+          <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>Image</Text>
         </View>
       )}
     </TouchableOpacity>

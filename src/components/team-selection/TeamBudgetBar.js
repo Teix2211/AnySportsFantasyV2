@@ -1,8 +1,10 @@
 // src/components/team-selection/TeamBudgetBar.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 const TeamBudgetBar = ({ budget, maxBudget, driverCount, maxDrivers }) => {
+  const { theme, isDarkMode } = useTheme();
   const budgetPercentage = ((maxBudget - budget) / maxBudget) * 100;
   
   // Determine color based on remaining budget
@@ -13,17 +15,21 @@ const TeamBudgetBar = ({ budget, maxBudget, driverCount, maxDrivers }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { 
+      backgroundColor: theme.card,
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOpacity: isDarkMode ? 0.3 : 0.1 
+    }]}>
       <View style={styles.infoRow}>
-        <Text style={styles.budgetText}>
+        <Text style={[styles.budgetText, { color: theme.text }]}>
           Budget: <Text style={styles.valueText}>${budget}M</Text>
         </Text>
-        <Text style={styles.driversText}>
+        <Text style={[styles.driversText, { color: theme.text }]}>
           Drivers: <Text style={styles.valueText}>{driverCount}/{maxDrivers}</Text>
         </Text>
       </View>
       
-      <View style={styles.barContainer}>
+      <View style={[styles.barContainer, { backgroundColor: isDarkMode ? '#444' : '#f0f0f0' }]}>
         <View 
           style={[
             styles.budgetBar, 
