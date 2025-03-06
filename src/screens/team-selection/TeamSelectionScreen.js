@@ -16,17 +16,21 @@ import { useAuth } from '../../context/AuthContext';
 
 // Import components
 import DriverCard from '../../components/drivers/DriverCard';
+import ConstructorCard from '../../components/constructors/ConstructorCard';
 import TeamBudgetBar from '../../components/team-selection/TeamBudgetBar';
 import TeamNameInput from '../../components/team-selection/TeamNameInput';
 import SelectedDriversList from '../../components/team-selection/SelectedDriversList';
+import SelectedConstructor from '../../components/team-selection/SelectedConstructor';
 import DriverFilters from '../../components/team-selection/DriverFilters';
+import SegmentedControl from '../../components/common/SegmentedControl';
 
 // Import actions
 import { fetchDrivers, selectDriver, removeDriver } from '../../store/actions/driverActions';
+import { fetchConstructors, selectConstructor, removeConstructor } from '../../store/actions/constructorActions';
 import { setTeamName, saveTeam, fetchUserTeam } from '../../store/actions/teamActions';
 
 // Import constants
-import { TEAM_BUDGET, MAX_DRIVERS } from '../../constants';
+import { TEAM_BUDGET, MAX_DRIVERS, MAX_CONSTRUCTORS } from '../../constants';
 
 const TeamSelectionScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -35,35 +39,44 @@ const TeamSelectionScreen = ({ navigation }) => {
   
   // Redux state
   const { drivers, loading: driversLoading } = useSelector(state => state.drivers);
-  const { selectedDrivers, teamName, teamSaved, userTeam } = useSelector(state => state.team);
+  const { constructors, loading: constructorsLoading } = useSelector(state => state.constructors || { constructors: [], loading: false });
+  const { selectedDrivers, selectedConstructor, teamName, teamSaved, userTeam } = useSelector(state => state.team);
   
   // Local state
   const [displayDrivers, setDisplayDrivers] = useState([]);
+  const [displayConstructors, setDisplayConstructors] = useState([]);
   const [remainingBudget, setRemainingBudget] = useState(TEAM_BUDGET);
   const [sortOption, setSortOption] = useState('price-desc');
+  const [selectionTab, setSelectionTab] = useState(0); // 0 = drivers, 1 = constructors
   
-  // Fetch drivers on mount and when user changes
+  // Fetch data on mount and when user changes
   useEffect(() => {
     dispatch(fetchDrivers());
+    dispatch(fetchConstructors());
     dispatch(fetchUserTeam());
   }, [dispatch, user?.id]);
   
   // If user has a team, load it into the editor
   useEffect(() => {
-    if (userTeam && userTeam.name && userTeam.drivers && userTeam.drivers.length > 0) {
+    if (userTeam && userTeam.name) {
       // Set team name
       dispatch(setTeamName(userTeam.name));
       
       // Add each driver to selection (if not already there)
-      if (selectedDrivers.length === 0) {
+      if (selectedDrivers.length === 0 && userTeam.drivers && userTeam.drivers.length > 0) {
         userTeam.drivers.forEach(driver => {
           if (!selectedDrivers.some(d => d.id === driver.id)) {
             dispatch(selectDriver(driver));
           }
         });
       }
+      
+      // Add constructor if exists and not already selected
+      if (!selectedConstructor && userTeam.constructor) {
+        dispatch(selectConstructor(userTeam.constructor));
+      }
     }
-  }, [userTeam, dispatch, selectedDrivers]);
+  }, [userTeam, dispatch, selectedDrivers, selectedConstructor]);
   
   // Update display drivers when drivers change or sort option changes
   useEffect(() => {
@@ -87,11 +100,34 @@ const TeamSelectionScreen = ({ navigation }) => {
     }
   }, [drivers, sortOption]);
   
-  // Calculate remaining budget when selected drivers change
+  // Update display constructors when constructors change or sort option changes
   useEffect(() => {
-    const totalCost = selectedDrivers.reduce((sum, driver) => sum + driver.price, 0);
-    setRemainingBudget(parseFloat((TEAM_BUDGET - totalCost).toFixed(1)));
-  }, [selectedDrivers]);
+    if (constructors && constructors.length > 0) {
+      const sortedConstructors = [...constructors].sort((a, b) => {
+        switch (sortOption) {
+          case 'price-asc':
+            return a.price - b.price;
+          case 'price-desc':
+            return b.price - a.price;
+          case 'points':
+            return b.points - a.points;
+          case 'form':
+            return b.form - a.form;
+          default:
+            return b.price - a.price;
+        }
+      });
+      
+      setDisplayConstructors(sortedConstructors);
+    }
+  }, [constructors, sortOption]);
+  
+  // Calculate remaining budget when selected drivers or constructor changes
+  useEffect(() => {
+    const driversCost = selectedDrivers.reduce((sum, driver) => sum + driver.price, 0);
+    const constructorCost = selectedConstructor ? selectedConstructor.price : 0;
+    setRemainingBudget(parseFloat((TEAM_BUDGET - driversCost - constructorCost).toFixed(1)));
+  }, [selectedDrivers, selectedConstructor]);
   
   // Handle driver selection
   const handleDriverSelection = (driver) => {
@@ -124,6 +160,37 @@ const TeamSelectionScreen = ({ navigation }) => {
     }
   };
   
+  // Handle constructor selection
+  const handleConstructorSelection = (constructor) => {
+    const isSelected = selectedConstructor && selectedConstructor.id === constructor.id;
+    
+    if (isSelected) {
+      dispatch(removeConstructor());
+    } else {
+      // Check if already have a constructor
+      if (selectedConstructor) {
+        Alert.alert(
+          'Constructor Already Selected',
+          'You can only select one constructor. Remove the current one first.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      // Check if enough budget
+      if (remainingBudget < constructor.price) {
+        Alert.alert(
+          'Budget Exceeded',
+          'You don\'t have enough budget to add this constructor.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      dispatch(selectConstructor(constructor));
+    }
+  };
+  
   // Handle team name change
   const handleTeamNameChange = (name) => {
     dispatch(setTeamName(name));
@@ -136,6 +203,15 @@ const TeamSelectionScreen = ({ navigation }) => {
       Alert.alert(
         'Incomplete Team',
         `You need to select ${MAX_DRIVERS} drivers.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    if (!selectedConstructor) {
+      Alert.alert(
+        'Constructor Required',
+        'You need to select a constructor for your team.',
         [{ text: 'OK' }]
       );
       return;
@@ -165,12 +241,29 @@ const TeamSelectionScreen = ({ navigation }) => {
     navigation.navigate('DriverDetail', { driverId });
   };
   
-  // Show loading indicator while fetching drivers
-  if (driversLoading) {
+  // Handle constructor details view
+  const handleViewConstructorDetails = (constructorId) => {
+    // You would need to create a ConstructorDetailScreen
+    // navigation.navigate('ConstructorDetail', { constructorId });
+    
+    // For now, just show basic info
+    const constructor = constructors.find(c => c.id === constructorId);
+    if (constructor) {
+      Alert.alert(
+        constructor.name,
+        `Drivers: ${constructor.drivers.join(', ')}\nPoints: ${constructor.points}\nForm: ${constructor.form}/10\nPrice: $${constructor.price}M`
+      );
+    }
+  };
+  
+  // Show loading indicator while fetching data
+  if ((driversLoading || constructorsLoading) && 
+      displayDrivers.length === 0 && 
+      displayConstructors.length === 0) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color="#e10600" />
-        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading drivers...</Text>
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading team data...</Text>
       </View>
     );
   }
@@ -188,7 +281,7 @@ const TeamSelectionScreen = ({ navigation }) => {
           budget={remainingBudget}
           maxBudget={TEAM_BUDGET}
           driverCount={selectedDrivers.length}
-          maxDrivers={MAX_DRIVERS}
+          constructorCount={selectedConstructor ? 1 : 0}
         />
         
         {/* Team Name Input */}
@@ -203,20 +296,54 @@ const TeamSelectionScreen = ({ navigation }) => {
           onRemoveDriver={handleDriverSelection}
         />
         
+        {/* Selected Constructor */}
+        <SelectedConstructor 
+          constructor={selectedConstructor}
+          onRemove={() => dispatch(removeConstructor())}
+        />
+        
         {/* Sorting Controls */}
         <DriverFilters onSortChange={setSortOption} />
         
-        {/* Available Drivers List */}
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
-        {displayDrivers.map(driver => (
-          <DriverCard 
-            key={driver.id}
-            driver={driver}
-            isSelected={selectedDrivers.some(d => d.id === driver.id)}
-            onPress={() => handleDriverSelection(driver)}
-            onViewDetails={() => handleViewDriverDetails(driver.id)}
+        {/* Tab selector for Drivers/Constructors */}
+        <View style={[styles.tabContainer, { backgroundColor: theme.card }]}>
+          <SegmentedControl
+            values={['Drivers', 'Constructors']}
+            selectedIndex={selectionTab}
+            onChange={setSelectionTab}
           />
-        ))}
+        </View>
+        
+        {/* Available Drivers or Constructors based on selected tab */}
+        {selectionTab === 0 ? (
+          // Drivers Tab
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
+            {displayDrivers.map(driver => (
+              <DriverCard 
+                key={driver.id}
+                driver={driver}
+                isSelected={selectedDrivers.some(d => d.id === driver.id)}
+                onPress={() => handleDriverSelection(driver)}
+                onViewDetails={() => handleViewDriverDetails(driver.id)}
+              />
+            ))}
+          </>
+        ) : (
+          // Constructors Tab
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Constructors</Text>
+            {displayConstructors.map(constructor => (
+              <ConstructorCard 
+                key={constructor.id}
+                constructor={constructor}
+                isSelected={selectedConstructor && selectedConstructor.id === constructor.id}
+                onPress={() => handleConstructorSelection(constructor)}
+                onViewDetails={() => handleViewConstructorDetails(constructor.id)}
+              />
+            ))}
+          </>
+        )}
       </ScrollView>
       
       {/* Save Team Button */}
@@ -226,10 +353,12 @@ const TeamSelectionScreen = ({ navigation }) => {
       }]}>
         <TouchableOpacity 
           style={[styles.saveButton, 
-            (selectedDrivers.length < MAX_DRIVERS || !teamName.trim()) && styles.saveButtonDisabled
+            (selectedDrivers.length < MAX_DRIVERS || 
+             !selectedConstructor || 
+             !teamName.trim()) && styles.saveButtonDisabled
           ]}
           onPress={handleSaveTeam}
-          disabled={selectedDrivers.length < MAX_DRIVERS || !teamName.trim()}
+          disabled={selectedDrivers.length < MAX_DRIVERS || !selectedConstructor || !teamName.trim()}
         >
           <Icon name="save-outline" size={20} color="#fff" style={styles.saveIcon} />
           <Text style={styles.saveButtonText}>
@@ -276,7 +405,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginTop: 5,
     color: '#333',
+  },
+  tabContainer: {
+    marginBottom: 15,
+    marginTop: 5,
+    padding: 5,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
   footer: {
     backgroundColor: '#fff',

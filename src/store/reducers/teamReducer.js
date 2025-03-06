@@ -1,15 +1,19 @@
 // src/store/reducers/teamReducer.js
+// src/store/reducers/teamReducer.js
 import {
   SELECT_DRIVER,
   REMOVE_DRIVER,
   SET_TEAM_NAME,
   SAVE_TEAM,
-  RESET_TEAM
+  RESET_TEAM,
+  SELECT_CONSTRUCTOR,
+  REMOVE_CONSTRUCTOR
 } from '../actions/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const initialState = {
   selectedDrivers: [],
+  selectedConstructor: null,
   teamName: '',
   teamSaved: false,
   userTeam: null,
@@ -70,6 +74,20 @@ export default function(state = initialState, action) {
         ),
         teamSaved: false
       };
+    
+    case SELECT_CONSTRUCTOR:
+      return {
+        ...state,
+        selectedConstructor: action.payload,
+        teamSaved: false
+      };
+    
+    case REMOVE_CONSTRUCTOR:
+      return {
+        ...state,
+        selectedConstructor: null,
+        teamSaved: false
+      };
       
     case SET_TEAM_NAME:
       return {
@@ -80,14 +98,19 @@ export default function(state = initialState, action) {
       
     case SAVE_TEAM:
       // Create a team object with user info
+      const driverPoints = state.selectedDrivers.reduce((sum, driver) => sum + driver.points, 0);
+      const constructorPoints = state.selectedConstructor ? state.selectedConstructor.points : 0;
+      
       const userTeam = {
         id: action.payload?.userId || 1,
         name: state.teamName,
-        totalPoints: state.selectedDrivers.reduce((sum, driver) => sum + driver.points, 0),
+        totalPoints: driverPoints + constructorPoints,
         rank: Math.floor(Math.random() * 1000) + 1, // Random rank for demo
-        totalValue: state.selectedDrivers.reduce((sum, driver) => sum + driver.price, 0),
+        totalValue: state.selectedDrivers.reduce((sum, driver) => sum + driver.price, 0) + 
+                   (state.selectedConstructor ? state.selectedConstructor.price : 0),
         form: Math.floor(Math.random() * 10) + 1, // Random form for demo
         drivers: state.selectedDrivers,
+        constructor: state.selectedConstructor,
         userId: action.payload?.userId || 1
       };
       
@@ -111,6 +134,10 @@ export default function(state = initialState, action) {
       return {
         ...state,
         userTeam: action.payload,
+        // If there's a user team, set up the selected drivers and constructor
+        selectedDrivers: action.payload?.drivers || [],
+        selectedConstructor: action.payload?.constructor || null,
+        teamName: action.payload?.name || '',
         loading: false
       };
       

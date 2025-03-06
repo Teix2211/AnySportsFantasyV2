@@ -2,8 +2,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { MAX_DRIVERS, MAX_CONSTRUCTORS } from '../../constants';
 
-const TeamBudgetBar = ({ budget, maxBudget, driverCount, maxDrivers }) => {
+const TeamBudgetBar = ({ budget, maxBudget, driverCount, constructorCount }) => {
   const { theme, isDarkMode } = useTheme();
   const budgetPercentage = ((maxBudget - budget) / maxBudget) * 100;
   
@@ -24,9 +25,14 @@ const TeamBudgetBar = ({ budget, maxBudget, driverCount, maxDrivers }) => {
         <Text style={[styles.budgetText, { color: theme.text }]}>
           Budget: <Text style={styles.valueText}>${budget}M</Text>
         </Text>
-        <Text style={[styles.driversText, { color: theme.text }]}>
-          Drivers: <Text style={styles.valueText}>{driverCount}/{maxDrivers}</Text>
-        </Text>
+        <View style={styles.teamComposition}>
+          <Text style={[styles.driversText, { color: theme.text }]}>
+            Drivers: <Text style={styles.valueText}>{driverCount}/{MAX_DRIVERS}</Text>
+          </Text>
+          <Text style={[styles.constructorsText, { color: theme.text }]}>
+            Constructor: <Text style={styles.valueText}>{constructorCount}/{MAX_CONSTRUCTORS}</Text>
+          </Text>
+        </View>
       </View>
       
       <View style={[styles.barContainer, { backgroundColor: isDarkMode ? '#444' : '#f0f0f0' }]}>
@@ -62,7 +68,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  teamComposition: {
+    flexDirection: 'row',
+  },
   driversText: {
+    fontSize: 16,
+    color: '#333',
+    marginRight: 15,
+  },
+  constructorsText: {
     fontSize: 16,
     color: '#333',
   },

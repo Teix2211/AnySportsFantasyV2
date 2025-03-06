@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -58,6 +58,27 @@ const TeamSummaryCard = ({ team }) => {
           <Text style={[styles.noDriversText, { color: theme.textSecondary }]}>No drivers selected</Text>
         )}
       </View>
+      
+      {/* Constructor Section */}
+      {team.constructor && (
+        <View style={[styles.constructorSection, { borderTopColor: theme.border, borderBottomColor: theme.border }]}>
+          <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Constructor</Text>
+          <View style={styles.constructorItem}>
+            {team.constructor.logoUrl ? (
+              <Image source={{ uri: team.constructor.logoUrl }} style={styles.constructorLogo} />
+            ) : (
+              <View style={[styles.constructorLogoPlaceholder, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]} />
+            )}
+            <View style={styles.constructorInfo}>
+              <Text style={[styles.constructorName, { color: theme.text }]}>{team.constructor.name}</Text>
+              <Text style={[styles.constructorDrivers, { color: theme.textSecondary }]}>
+                {team.constructor.drivers ? team.constructor.drivers.join(' • ') : "Team"}
+              </Text>
+            </View>
+            <Text style={styles.constructorPoints}>{team.constructor.points || 0} pts</Text>
+          </View>
+        </View>
+      )}
       
       <View style={[styles.footer, { borderTopColor: theme.border }]}>
         <View style={styles.statItem}>
@@ -157,6 +178,52 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   driverPoints: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#e10600',
+  },
+  constructorSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingVertical: 10,
+    marginBottom: 15,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 8,
+  },
+  constructorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  constructorLogo: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+    marginRight: 10,
+  },
+  constructorLogoPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 5,
+    backgroundColor: '#f0f0f0',
+    marginRight: 10,
+  },
+  constructorInfo: {
+    flex: 1,
+  },
+  constructorName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  constructorDrivers: {
+    fontSize: 12,
+    color: '#666',
+  },
+  constructorPoints: {
     fontSize: 14,
     fontWeight: '500',
     color: '#e10600',
