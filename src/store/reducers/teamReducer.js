@@ -1,5 +1,4 @@
 // src/store/reducers/teamReducer.js
-// src/store/reducers/teamReducer.js
 import {
   SELECT_DRIVER,
   REMOVE_DRIVER,

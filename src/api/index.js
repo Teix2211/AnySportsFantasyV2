@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Use your server URL (localhost for development, deployed URL for production)
-const API_URL = 'http://192.168.1.100:5000/api'; // Use your dev machine's IP
+const API_URL = 'https://anysportsfantasy-api-cde902d6a36d.herokuapp.com/api'; // Use your dev machine's IP
 
 // Create axios instance
 const api = axios.create({
@@ -72,12 +72,18 @@ export const fetchDriverById = async (id) => {
 };
 
 // Constructors API
+// src/api/index.js
 export const fetchConstructors = async (season = '2024') => {
   try {
+    console.log('Fetching constructors from:', `${API_URL}/constructors?season=${season}`);
     const response = await api.get(`/constructors?season=${season}`);
+    console.log('Constructors API response:', response.data);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Server error' };
+    console.error('Error fetching constructors:', 
+      error.response?.data || error.message);
+    // Return empty array instead of throwing error
+    return [];
   }
 };
 

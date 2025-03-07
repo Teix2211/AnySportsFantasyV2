@@ -80,7 +80,7 @@ const TeamSelectionScreen = ({ navigation }) => {
   
   // Update display drivers when drivers change or sort option changes
   useEffect(() => {
-    if (drivers.length > 0) {
+    if (drivers && drivers.length > 0) {
       const sortedDrivers = [...drivers].sort((a, b) => {
         switch (sortOption) {
           case 'price-asc':
@@ -119,8 +119,14 @@ const TeamSelectionScreen = ({ navigation }) => {
       });
       
       setDisplayConstructors(sortedConstructors);
+    } else {
+      console.log('No constructors data available');
     }
   }, [constructors, sortOption]);
+
+  useEffect(() => {
+    console.log('Constructor state:', constructors);
+  }, [constructors]);
   
   // Calculate remaining budget when selected drivers or constructor changes
   useEffect(() => {
@@ -321,7 +327,7 @@ const TeamSelectionScreen = ({ navigation }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
             {displayDrivers.map(driver => (
               <DriverCard 
-                key={driver.id}
+                key={driver.id.toString()}
                 driver={driver}
                 isSelected={selectedDrivers.some(d => d.id === driver.id)}
                 onPress={() => handleDriverSelection(driver)}
