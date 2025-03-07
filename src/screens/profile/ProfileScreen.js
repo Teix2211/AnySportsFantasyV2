@@ -1,3 +1,4 @@
+// Update imports in src/screens/profile/ProfileScreen.js
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -9,12 +10,14 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Switch
+  Switch,
+  Modal // Add this import
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { changePassword } from '../../api'; // Add this import
 
 const ProfileScreen = () => {
   const { user, logout, updateProfile, loading } = useAuth();
@@ -25,6 +28,14 @@ const ProfileScreen = () => {
     fullName: user?.fullName || '',
     email: user?.email || ''
   });
+  
+  // Add password change states
+  const [isPasswordModalVisible, setPasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
   
   // Settings state
   const [settings, setSettings] = useState({
@@ -79,6 +90,46 @@ const ProfileScreen = () => {
       Alert.alert('Success', 'Profile updated successfully');
     } else {
       Alert.alert('Error', 'Failed to update profile');
+    }
+  };
+
+  // Handle change password
+  const handleChangePassword = () => {
+    // Reset states when opening the modal
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError('');
+    setPasswordModalVisible(true);
+  };
+
+  // Handle password change submission
+  const handlePasswordSubmit = async () => {
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+    
+    try {
+      setPasswordLoading(true);
+      await changePassword(currentPassword, newPassword);
+      setPasswordModalVisible(false);
+      Alert.alert('Success', 'Password changed successfully');
+    } catch (error) {
+      setPasswordError(error.message || 'Failed to change password');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -210,7 +261,10 @@ const ProfileScreen = () => {
             <Icon name="chevron-forward" size={20} color={isDarkMode ? '#777' : '#ccc'} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]}>
+          <TouchableOpacity 
+            style={[styles.menuItem, { borderBottomColor: theme.border }]}
+            onPress={handleChangePassword}
+          >
             <Icon name="lock-closed-outline" size={20} color={isDarkMode ? '#aaa' : '#555'} style={styles.menuIcon} />
             <Text style={[styles.menuText, { color: theme.text }]}>Change Password</Text>
             <Icon name="chevron-forward" size={20} color={isDarkMode ? '#777' : '#ccc'} />
@@ -291,6 +345,87 @@ const ProfileScreen = () => {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       )}
+
+      {/* Password Change Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isPasswordModalVisible}
+        onRequestClose={() => setPasswordModalVisible(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Change Password</Text>
+            
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
+            
+            <TextInput
+              style={[styles.modalInput, { 
+                color: theme.text, 
+                borderColor: theme.border,
+                backgroundColor: isDarkMode ? '#2c2c2c' : '#fff' 
+              }]}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder="Current Password"
+              placeholderTextColor={isDarkMode ? '#888' : '#ccc'}
+              secureTextEntry
+            />
+            
+            <TextInput
+              style={[styles.modalInput, { 
+                color: theme.text, 
+                borderColor: theme.border,
+                backgroundColor: isDarkMode ? '#2c2c2c' : '#fff' 
+              }]}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="New Password"
+              placeholderTextColor={isDarkMode ? '#888' : '#ccc'}
+              secureTextEntry
+            />
+            
+            <TextInput
+              style={[styles.modalInput, { 
+                color: theme.text, 
+                borderColor: theme.border,
+                backgroundColor: isDarkMode ? '#2c2c2c' : '#fff' 
+              }]}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm New Password"
+              placeholderTextColor={isDarkMode ? '#888' : '#ccc'}
+              secureTextEntry
+            />
+            
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: isDarkMode ? '#333' : '#f5f5f5' }]}
+                onPress={() => setPasswordModalVisible(false)}
+              >
+                <Text style={{ 
+                  fontWeight: 'bold',
+                  color: isDarkMode ? '#fff' : '#e10600' 
+                }}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handlePasswordSubmit}
+                disabled={passwordLoading}
+              >
+                {passwordLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.buttonText}>Change Password</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -475,6 +610,58 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 3,
     borderColor: '#fff',
+  },
+  
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#e10600',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

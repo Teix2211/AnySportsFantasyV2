@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { RESET_TEAM } from '../store/actions/types';
 import { fetchUserTeam } from '../store/actions/teamActions';
+import { registerUser, loginUser, loadUser } from '../api';
 
 // Create context
 const AuthContext = createContext();
@@ -48,24 +49,17 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'AUTH_LOADING' });
       setError(null);
       
-      // Generate a random user ID for testing multiple accounts
-      const userId = Math.floor(Math.random() * 1000) + 1;
+      // Make API call to login endpoint
+      const response = await loginUser(email, password);
       
-      // For testing, accept any email/password
-      const userData = {
-        id: userId,
-        username: email.split('@')[0],
-        email: email,
-        fullName: '',
-        avatar: null,
-        rank: Math.floor(Math.random() * 2000) + 1,
-        points: Math.floor(Math.random() * 500),
-        leagues: Math.floor(Math.random() * 5)
-      };
+      // Store the JWT token
+      await AsyncStorage.setItem('token', response.token);
       
-      // Store auth data
+      // Fetch user data using the token
+      const userData = await loadUser();
+      
+      // Store user data
       await AsyncStorage.setItem('user', JSON.stringify(userData));
-      await AsyncStorage.setItem('token', 'mock-token-value-' + userId);
       
       setUser(userData);
       
@@ -77,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       
       return true;
     } catch (e) {
-      const errorMsg = 'An error occurred during login: ' + e.message;
+      const errorMsg = e.message || 'Invalid credentials';
       setError(errorMsg);
       dispatch({ type: 'AUTH_ERROR', payload: errorMsg });
       return false;
@@ -93,35 +87,24 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'AUTH_LOADING' });
       setError(null);
       
-      // Generate a random user ID for testing multiple accounts
-      const userId = Math.floor(Math.random() * 1000) + 1;
+      // Make the actual API call to register
+      const response = await registerUser({ username, email, password });
       
-      const userData = {
-        id: userId,
-        username: username,
-        email: email,
-        fullName: '',
-        avatar: null,
-        rank: 0,
-        points: 0,
-        leagues: 0
-      };
+      // Store the token from the API
+      await AsyncStorage.setItem('token', response.token);
       
-      // Store auth data
+      // Fetch user data with the token
+      const userData = await loadUser();
+      
       await AsyncStorage.setItem('user', JSON.stringify(userData));
-      await AsyncStorage.setItem('token', 'mock-token-value-' + userId);
-      
       setUser(userData);
       
       // Update Redux state
       dispatch({ type: 'SET_USER', payload: userData });
       
-      // Fetch this user's team (will be null for new users)
-      dispatch(fetchUserTeam());
-      
       return true;
     } catch (e) {
-      const errorMsg = 'An error occurred during registration: ' + e.message;
+      const errorMsg = e.message || 'An error occurred during registration';
       setError(errorMsg);
       dispatch({ type: 'AUTH_ERROR', payload: errorMsg });
       return false;
