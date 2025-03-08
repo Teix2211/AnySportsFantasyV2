@@ -58,7 +58,7 @@ const SelectedDriversList = ({ drivers, onRemoveDriver }) => {
       
       {/* Render drivers directly instead of using FlatList */}
       {drivers.map((driver, index) => (
-        <React.Fragment key={driver.id}>
+        <React.Fragment key={driver._id || driver.id || index}>
           <DriverItem 
             driver={driver} 
             onRemove={() => onRemoveDriver(driver)}

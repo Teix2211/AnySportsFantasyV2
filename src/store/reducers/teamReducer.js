@@ -54,32 +54,56 @@ export const loadTeamFromStorage = async (userId) => {
 export default function(state = initialState, action) {
   switch(action.type) {
     case SELECT_DRIVER:
-      // Check if the driver is already selected
-      if (state.selectedDrivers.some(driver => driver.id === action.payload.id)) {
+      // Create an ID-normalized version of the driver
+        const normalizedDriver = {
+          ...action.payload,
+          id: action.payload.id || action.payload._id
+        };
+  
+      // Check if driver is already selected using both id types
+      const isDriverSelected = state.selectedDrivers.some(d => 
+        (d.id && normalizedDriver.id && d.id === normalizedDriver.id) ||
+        (d._id && normalizedDriver._id && d._id === normalizedDriver._id)
+      );
+  
+      if (isDriverSelected) {
         return state;
       }
-      
+  
+      console.log('Adding driver to team:', normalizedDriver.id);
+      console.log('Current team size:', state.selectedDrivers.length);
+  
       return {
         ...state,
-        selectedDrivers: [...state.selectedDrivers, action.payload],
+        selectedDrivers: [...state.selectedDrivers, normalizedDriver],
         teamSaved: false
       };
       
-    case REMOVE_DRIVER:
-      return {
-        ...state,
-        selectedDrivers: state.selectedDrivers.filter(
-          driver => driver.id !== action.payload.id
-        ),
-        teamSaved: false
-      };
+      case REMOVE_DRIVER:
+        const driverToRemove = action.payload;
+        const driverId = driverToRemove.id || driverToRemove._id;
+        
+        return {
+          ...state,
+          selectedDrivers: state.selectedDrivers.filter(driver => {
+            const currentId = driver.id || driver._id;
+            return currentId !== driverId;
+          }),
+          teamSaved: false
+        };
     
-    case SELECT_CONSTRUCTOR:
-      return {
-        ...state,
-        selectedConstructor: action.payload,
-        teamSaved: false
-      };
+      case SELECT_CONSTRUCTOR:
+        // Normalize constructor ID
+        const normalizedConstructor = {
+          ...action.payload,
+          id: action.payload.id || action.payload._id
+        };
+          
+        return {
+          ...state,
+          selectedConstructor: normalizedConstructor,
+          teamSaved: false
+        };
     
     case REMOVE_CONSTRUCTOR:
       return {

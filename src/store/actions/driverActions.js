@@ -43,9 +43,15 @@ export const fetchDrivers = () => {
 };
 
 export const selectDriver = (driver) => {
+  // Create a consistent driver object with both id fields
+  const driverWithConsistentId = {
+    ...driver,
+    id: driver.id || driver._id
+  };
+  
   return {
     type: SELECT_DRIVER,
-    payload: driver
+    payload: driverWithConsistentId
   };
 };
 

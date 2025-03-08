@@ -76,7 +76,7 @@ const TeamSelectionScreen = ({ navigation }) => {
         dispatch(selectConstructor(userTeam.constructor));
       }
     }
-  }, [userTeam, dispatch, selectedDrivers, selectedConstructor]);
+  }, [userTeam, dispatch]);
   
   // Update display drivers when drivers change or sort option changes
   useEffect(() => {
@@ -137,7 +137,13 @@ const TeamSelectionScreen = ({ navigation }) => {
   
   // Handle driver selection
   const handleDriverSelection = (driver) => {
-    const isSelected = selectedDrivers.some(d => d.id === driver.id);
+    console.log('Selecting driver:', driver.id);
+    console.log('Current team:', selectedDrivers.map(d => d.id));
+    // Check if driver is already selected - handle both id and _id
+    const isSelected = selectedDrivers.some(d => 
+      (d.id && driver.id && d.id === driver.id) || 
+      (d._id && driver._id && d._id === driver._id)
+    );
     
     if (isSelected) {
       dispatch(removeDriver(driver));
@@ -168,7 +174,10 @@ const TeamSelectionScreen = ({ navigation }) => {
   
   // Handle constructor selection
   const handleConstructorSelection = (constructor) => {
-    const isSelected = selectedConstructor && selectedConstructor.id === constructor.id;
+    const constructorId = constructor.id || constructor._id;
+    const isSelected = selectedConstructor && 
+      ((selectedConstructor.id && selectedConstructor.id === constructorId) || 
+       (selectedConstructor._id && selectedConstructor._id === constructorId));
     
     if (isSelected) {
       dispatch(removeConstructor());
@@ -327,12 +336,15 @@ const TeamSelectionScreen = ({ navigation }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
             {displayDrivers.map(driver => (
               <DriverCard 
-              key={drivers._id}
-                driver={driver}
-                isSelected={selectedDrivers.some(d => d.id === driver.id)}
-                onPress={() => handleDriverSelection(driver)}
-                onViewDetails={() => handleViewDriverDetails(driver.id)}
-              />
+              key={driver._id || driver.id}
+              driver={driver}
+              isSelected={selectedDrivers.some(d => 
+                (d.id && driver.id && d.id === driver.id) || 
+                (d._id && driver._id && d._id === driver._id)
+              )}
+              onPress={() => handleDriverSelection(driver)}
+              onViewDetails={() => handleViewDriverDetails(driver._id || driver.id)}
+            />
             ))}
           </>
         ) : (
@@ -341,12 +353,14 @@ const TeamSelectionScreen = ({ navigation }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Constructors</Text>
             {displayConstructors.map(constructor => (
               <ConstructorCard 
-                key={constructors._id}
-                constructor={constructor}
-                isSelected={selectedConstructor && selectedConstructor.id === constructor.id}
-                onPress={() => handleConstructorSelection(constructor)}
-                onViewDetails={() => handleViewConstructorDetails(constructor.id)}
-              />
+              key={constructor.id}
+              constructor={constructor}
+              isSelected={selectedConstructor && 
+                ((selectedConstructor.id && constructor.id && selectedConstructor.id === constructor.id) || 
+                 (selectedConstructor._id && constructor._id && selectedConstructor._id === constructor._id))}
+              onPress={() => handleConstructorSelection(constructor)}
+              onViewDetails={() => handleViewConstructorDetails(constructor.id)}
+            />
             ))}
           </>
         )}

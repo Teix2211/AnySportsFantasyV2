@@ -46,9 +46,15 @@ export const fetchConstructors = () => {
 
 // Add a constructor to the user's team
 export const selectConstructor = (constructor) => {
+  // Create a consistent constructor object with both id fields
+  const constructorWithConsistentId = {
+    ...constructor,
+    id: constructor.id || constructor._id
+  };
+  
   return {
     type: SELECT_CONSTRUCTOR,
-    payload: constructor
+    payload: constructorWithConsistentId
   };
 };
 
