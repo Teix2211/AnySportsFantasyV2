@@ -123,11 +123,14 @@ const ProfileScreen = () => {
     
     try {
       setPasswordLoading(true);
+      setPasswordError(''); // Clear any previous errors
+      
       await changePassword(currentPassword, newPassword);
       setPasswordModalVisible(false);
       Alert.alert('Success', 'Password changed successfully');
     } catch (error) {
-      setPasswordError(error.message || 'Failed to change password');
+      console.error('Password change error:', error);
+      setPasswordError(error.message || 'Failed to change password. Please check your current password and try again.');
     } finally {
       setPasswordLoading(false);
     }

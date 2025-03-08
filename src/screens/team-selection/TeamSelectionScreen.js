@@ -327,7 +327,7 @@ const TeamSelectionScreen = ({ navigation }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
             {displayDrivers.map(driver => (
               <DriverCard 
-                key={driver.id.toString()}
+              key={`driver-${driver.id || driver._id || driver.lastName + index}`}
                 driver={driver}
                 isSelected={selectedDrivers.some(d => d.id === driver.id)}
                 onPress={() => handleDriverSelection(driver)}
@@ -341,7 +341,7 @@ const TeamSelectionScreen = ({ navigation }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Constructors</Text>
             {displayConstructors.map(constructor => (
               <ConstructorCard 
-                key={constructor.id}
+                key={`constructor-${constructor.id || constructor._id || constructor.name}`}
                 constructor={constructor}
                 isSelected={selectedConstructor && selectedConstructor.id === constructor.id}
                 onPress={() => handleConstructorSelection(constructor)}

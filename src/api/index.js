@@ -109,6 +109,21 @@ export const saveTeam = async (teamData) => {
   }
 };
 
+export const changePassword = async (currentPassword, newPassword) => {
+  try {
+    console.log('Sending password change request to:', `${API_URL}/auth/password`);
+    const response = await api.put('/auth/password', { 
+      currentPassword, 
+      newPassword 
+    });
+    console.log('Password change response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Password change error details:', error);
+    throw error.response?.data || { message: 'Server error: ' + error.message };
+  }
+};
+
 // More API functions as needed...
 
 export default api;

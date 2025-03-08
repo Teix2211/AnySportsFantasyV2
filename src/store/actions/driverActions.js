@@ -14,11 +14,26 @@ export const fetchDrivers = () => {
     
     try {
       const data = await apiGetDrivers();
+      
+      // If API returns empty or undefined data, use fallback data
+      const driversData = data && data.length > 0 ? data : fallbackDrivers;
+      
       dispatch({
         type: FETCH_DRIVERS_SUCCESS,
-        payload: data
+        payload: driversData
       });
+      
+      console.log('Drivers fetched successfully:', driversData.length);
     } catch (error) {
+      console.error('Error fetching drivers:', error);
+      
+      // Use fallback data on error
+      dispatch({
+        type: FETCH_DRIVERS_SUCCESS,
+        payload: fallbackDrivers
+      });
+      
+      // Also dispatch failure for logging purposes
       dispatch({
         type: FETCH_DRIVERS_FAILURE,
         payload: error.message

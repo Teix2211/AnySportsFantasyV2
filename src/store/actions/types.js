@@ -1,6 +1,8 @@
 // src/store/actions/types.js
 // Driver actions
 export const FETCH_DRIVERS = 'FETCH_DRIVERS';
+export const FETCH_DRIVERS_SUCCESS = 'FETCH_DRIVERS_SUCCESS';
+export const FETCH_DRIVERS_FAILURE = 'FETCH_DRIVERS_FAILURE';
 export const SELECT_DRIVER = 'SELECT_DRIVER';
 export const REMOVE_DRIVER = 'REMOVE_DRIVER';
 

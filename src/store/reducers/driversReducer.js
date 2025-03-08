@@ -1,5 +1,9 @@
 // src/store/reducers/driversReducer.js
-import { FETCH_DRIVERS } from '../actions/types';
+import { 
+  FETCH_DRIVERS,
+  FETCH_DRIVERS_SUCCESS,
+  FETCH_DRIVERS_FAILURE
+} from '../actions/types';
 
 const initialState = {
   drivers: [],
@@ -12,9 +16,25 @@ export default function(state = initialState, action) {
     case FETCH_DRIVERS:
       return {
         ...state,
-        drivers: action.payload,
-        loading: false
+        loading: true,
+        error: null
       };
+      
+    case FETCH_DRIVERS_SUCCESS:
+      return {
+        ...state,
+        drivers: action.payload,
+        loading: false,
+        error: null
+      };
+      
+    case FETCH_DRIVERS_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload
+      };
+      
     default:
       return state;
   }
