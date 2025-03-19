@@ -68,9 +68,9 @@ const DriverFilters = ({ onSortChange }) => {
           iconName="podium"
         />
         <SortOption 
-          title="Form" 
-          isActive={activeSort === 'form'} 
-          onPress={() => handleSortChange('form')}
+          title="ELO" 
+          isActive={activeSort === 'ELO'} 
+          onPress={() => handleSortChange('ELO')}
           iconName="speedometer"
         />
       </View>

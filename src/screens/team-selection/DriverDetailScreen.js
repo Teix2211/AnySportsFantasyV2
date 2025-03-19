@@ -105,8 +105,8 @@ const DriverDetailScreen = ({ route, navigation }) => {
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{driver.form}/10</Text>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Form</Text>
+            <Text style={styles.statValue}>{driver.eloRating}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>ELO</Text>
           </View>
           
           <View style={styles.statItem}>

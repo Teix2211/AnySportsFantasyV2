@@ -41,7 +41,7 @@ const DriverCard = ({ driver, isSelected, onPress, onViewDetails }) => {
             Points: {driver.points}
           </Text>
           <Text style={[styles.stat, { color: theme.textSecondary }]}>
-            Form: {driver.form}/10
+            ELO: {driver.eloRating}
           </Text>
         </View>
       </View>
