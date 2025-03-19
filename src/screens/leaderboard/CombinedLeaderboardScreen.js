@@ -1,4 +1,4 @@
-// src/screens/leaderboard/LeaderboardScreen.js
+// src/screens/leaderboard/CombinedLeaderboardScreen.js
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, 
@@ -6,8 +6,7 @@ import {
   StyleSheet, 
   FlatList, 
   TouchableOpacity,
-  RefreshControl,
-  Modal
+  RefreshControl
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLeaderboard } from '../../store/actions/leaderboardActions';
@@ -15,30 +14,23 @@ import LeaderboardItem from '../../components/leaderboard/LeaderboardItem';
 import PodiumView from '../../components/leaderboard/PodiumView';
 import SegmentedControl from '../../components/common/SegmentedControl';
 import LoadingIndicator from '../../components/common/LoadingIndicator';
+import CompetitionSelector from '../../components/competitions/CompetitionSelector';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const LeaderboardScreen = () => {
+const CombinedLeaderboardScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { theme, isDarkMode } = useTheme();
   const { user } = useAuth();
   const { leaderboard, loading, error } = useSelector(state => state.leaderboard);
-  const { competitions } = useSelector(state => state.competitions);
   
   const [leaderboardType, setLeaderboardType] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [userRank, setUserRank] = useState(null);
-  const [selectedCompetition, setSelectedCompetition] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  
-  // Set default competition when competitions are loaded
-  useEffect(() => {
-    if (competitions && competitions.length > 0 && !selectedCompetition) {
-      const defaultComp = competitions.find(c => c.active) || competitions[0];
-      setSelectedCompetition(defaultComp);
-    }
-  }, [competitions]);
+  const [activeCompetition, setActiveCompetition] = useState(null);
+  const [combinedLeaderboard, setCombinedLeaderboard] = useState([]);
+  const [showTotalPoints, setShowTotalPoints] = useState(true);
   
   // Mapping segment index to leaderboard type
   const typeMapping = ['global', 'friends', 'leagues'];
@@ -52,12 +44,34 @@ const LeaderboardScreen = () => {
     loadData();
   }, [loadData]);
   
-  // Find user's rank in the leaderboard
+  // Simulate combined leaderboard data
   useEffect(() => {
-    if (leaderboard && user) {
-      const userEntry = leaderboard.findIndex(item => item.owner === user.username);
-      if (userEntry !== -1) {
-        setUserRank(userEntry + 1);
+    if (leaderboard && leaderboard.length > 0) {
+      // Create a simulated combined leaderboard
+      const combined = leaderboard.map(item => ({
+        ...item,
+        // Add points from other competitions (simulated)
+        f1Points: item.points,
+        f2Points: Math.floor(Math.random() * 200),
+        f3Points: Math.floor(Math.random() * 150),
+        indyPoints: Math.floor(Math.random() * 250),
+        totalPoints: item.points + 
+                     Math.floor(Math.random() * 200) + 
+                     Math.floor(Math.random() * 150) + 
+                     Math.floor(Math.random() * 250)
+      }));
+      
+      // Sort by total points
+      const sortedCombined = [...combined].sort((a, b) => b.totalPoints - a.totalPoints);
+      
+      setCombinedLeaderboard(sortedCombined);
+      
+      // Find user's rank in the combined leaderboard
+      if (user) {
+        const userEntry = sortedCombined.findIndex(item => item.owner === user.username);
+        if (userEntry !== -1) {
+          setUserRank(userEntry + 1);
+        }
       }
     }
   }, [leaderboard, user]);
@@ -68,15 +82,26 @@ const LeaderboardScreen = () => {
     setTimeout(() => setRefreshing(false), 1000);
   }, [loadData]);
   
-  const handleSelectCompetition = (competition) => {
-    setSelectedCompetition(competition);
-    setModalVisible(false);
+  const handleCompetitionChange = (competition) => {
+    setActiveCompetition(competition);
+    setShowTotalPoints(competition.id === 'all');
+  };
+  
+  const togglePointsView = () => {
+    setShowTotalPoints(!showTotalPoints);
   };
   
   const renderItem = ({ item, index }) => (
     <LeaderboardItem 
       rank={index + 1}
-      team={item}
+      team={{
+        ...item,
+        points: showTotalPoints ? item.totalPoints : 
+                (activeCompetition && activeCompetition.id === 'f2-2024') ? item.f2Points :
+                (activeCompetition && activeCompetition.id === 'f3-2024') ? item.f3Points :
+                (activeCompetition && activeCompetition.id === 'indy-2024') ? item.indyPoints :
+                item.f1Points
+      }}
     />
   );
   
@@ -84,22 +109,18 @@ const LeaderboardScreen = () => {
     <View style={styles.header}>
       <Text style={styles.title}>Leaderboard</Text>
       
-      {/* Competition selector button */}
+      <CompetitionSelector 
+        onSelectCompetition={handleCompetitionChange}
+      />
+      
       <TouchableOpacity 
-        style={[styles.competitionSelector, { backgroundColor: isDarkMode ? '#222' : '#fff' }]} 
-        onPress={() => setModalVisible(true)}
+        style={[styles.pointsToggle, {backgroundColor: isDarkMode ? '#2c2c2c' : '#f9f9f9'}]}
+        onPress={togglePointsView}
       >
-        <View style={styles.competitionInfo}>
-          <Text style={[styles.competitionName, { color: theme.text }]}>
-            {selectedCompetition ? selectedCompetition.name : 'Select Competition'}
-          </Text>
-          {selectedCompetition && (
-            <Text style={[styles.competitionSeason, { color: theme.textSecondary }]}>
-              {selectedCompetition.season} Season
-            </Text>
-          )}
-        </View>
-        <Icon name="chevron-down" size={20} color={isDarkMode ? '#fff' : '#333'} />
+        <Text style={[styles.pointsToggleText, {color: theme.text}]}>
+          {showTotalPoints ? 'Showing: Total Points' : `Showing: ${activeCompetition?.name || 'F1'} Points`}
+        </Text>
+        <Icon name="swap-vertical" size={18} color="#e10600" />
       </TouchableOpacity>
       
       <SegmentedControl
@@ -140,20 +161,29 @@ const LeaderboardScreen = () => {
     );
   }
   
+  const displayData = combinedLeaderboard.length > 0 ? combinedLeaderboard : leaderboard;
+  
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {renderHeader()}
       
-      {leaderboard && leaderboard.length > 0 ? (
+      {displayData && displayData.length > 0 ? (
         <FlatList
-          data={leaderboard}
+          data={displayData}
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={() => (
             <>
-              {leaderboard.length >= 3 && (
-                <PodiumView top3Teams={leaderboard.slice(0, 3)} />
+              {displayData.length >= 3 && (
+                <PodiumView top3Teams={displayData.slice(0, 3).map(team => ({
+                  ...team,
+                  points: showTotalPoints ? team.totalPoints : 
+                          (activeCompetition && activeCompetition.id === 'f2-2024') ? team.f2Points :
+                          (activeCompetition && activeCompetition.id === 'f3-2024') ? team.f3Points :
+                          (activeCompetition && activeCompetition.id === 'indy-2024') ? team.indyPoints :
+                          team.f1Points
+                }))} />
               )}
               <View style={[styles.listHeader, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}>
                 <Text style={[styles.rankHeader, { color: theme.textSecondary }]}>Rank</Text>
@@ -178,54 +208,6 @@ const LeaderboardScreen = () => {
           </Text>
         </View>
       )}
-
-      {/* Competition selection modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Select Competition</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Icon name="close" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              data={competitions}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={[
-                    styles.competitionItem,
-                    { borderBottomColor: theme.border },
-                    selectedCompetition?.id === item.id && 
-                      { backgroundColor: isDarkMode ? '#333' : '#f9f9f9' }
-                  ]}
-                  onPress={() => handleSelectCompetition(item)}
-                >
-                  <Text style={[
-                    styles.competitionItemName,
-                    { color: theme.text },
-                    selectedCompetition?.id === item.id && 
-                      { fontWeight: 'bold', color: theme.primary }
-                  ]}>
-                    {item.name} {item.season}
-                  </Text>
-                  
-                  {selectedCompetition?.id === item.id && (
-                    <Icon name="checkmark-circle" size={20} color="#e10600" />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -245,24 +227,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 10,
   },
-  competitionSelector: {
+  pointsToggle: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
     padding: 10,
-    marginBottom: 10,
+    borderRadius: 8,
+    marginVertical: 10,
   },
-  competitionInfo: {
-    flex: 1,
-  },
-  competitionName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  competitionSeason: {
-    fontSize: 12,
+  pointsToggleText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   userRankCard: {
     backgroundColor: '#f9f9f9',
@@ -343,47 +319,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 20,
-  },
-  modalContent: {
-    width: '90%',
-    maxHeight: '70%',
-    borderRadius: 10,
-    padding: 15,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  competitionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  competitionItemName: {
-    fontSize: 16,
-  },
 });
 
-export default LeaderboardScreen;
+export default CombinedLeaderboardScreen;

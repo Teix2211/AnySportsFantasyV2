@@ -32,10 +32,126 @@ import { setTeamName, saveTeam, fetchUserTeam } from '../../store/actions/teamAc
 // Import constants
 import { TEAM_BUDGET, MAX_DRIVERS, MAX_CONSTRUCTORS } from '../../constants';
 
+// Mock data for other competitions
+const mockF2Drivers = [
+  {
+    id: 'f2-1',
+    firstName: 'Jack',
+    lastName: 'Doohan',
+    team: 'Virtuosi Racing',
+    points: 95,
+    price: 15.5,
+    form: 8.5,
+    imageUrl: 'https://via.placeholder.com/150?text=Doohan'
+  },
+  {
+    id: 'f2-2',
+    firstName: 'Theo',
+    lastName: 'Pourchaire',
+    team: 'ART Grand Prix',
+    points: 110,
+    price: 16.0,
+    form: 9.0,
+    imageUrl: 'https://via.placeholder.com/150?text=Pourchaire'
+  },
+  {
+    id: 'f2-3',
+    firstName: 'Frederik',
+    lastName: 'Vesti',
+    team: 'Prema Racing',
+    points: 88,
+    price: 14.5,
+    form: 8.0,
+    imageUrl: 'https://via.placeholder.com/150?text=Vesti'
+  }
+];
+
+const mockF2Constructors = [
+  {
+    id: 'f2-team-1',
+    name: 'Prema Racing',
+    points: 180,
+    price: 18.0,
+    form: 9.2,
+    drivers: ['Oliver Bearman', 'Frederik Vesti'],
+    logoUrl: 'https://via.placeholder.com/150?text=Prema',
+    color: '#ff0000'
+  },
+  {
+    id: 'f2-team-2',
+    name: 'ART Grand Prix',
+    points: 165,
+    price: 17.5,
+    form: 8.8,
+    drivers: ['Theo Pourchaire', 'Victor Martins'],
+    logoUrl: 'https://via.placeholder.com/150?text=ART',
+    color: '#0000ff'
+  }
+];
+
+const mockF3Drivers = [
+  {
+    id: 'f3-1',
+    firstName: 'Gabriel',
+    lastName: 'Bortoleto',
+    team: 'Trident',
+    points: 85,
+    price: 10.5,
+    form: 8.0,
+    imageUrl: 'https://via.placeholder.com/150?text=Bortoleto'
+  },
+  {
+    id: 'f3-2',
+    firstName: 'Zak',
+    lastName: 'O\'Sullivan',
+    team: 'Prema Racing',
+    points: 78,
+    price: 9.5,
+    form: 7.8,
+    imageUrl: 'https://via.placeholder.com/150?text=OSullivan'
+  },
+  {
+    id: 'f3-3',
+    firstName: 'Oliver',
+    lastName: 'Goethe',
+    team: 'Campos Racing',
+    points: 65,
+    price: 8.5,
+    form: 7.2,
+    imageUrl: 'https://via.placeholder.com/150?text=Goethe'
+  }
+];
+
+const mockF3Constructors = [
+  {
+    id: 'f3-team-1',
+    name: 'Trident',
+    points: 160,
+    price: 15.0,
+    form: 8.5,
+    drivers: ['Gabriel Bortoleto', 'Leonardo Fornaroli'],
+    logoUrl: 'https://via.placeholder.com/150?text=Trident',
+    color: '#00ffff'
+  },
+  {
+    id: 'f3-team-2',
+    name: 'Prema Racing',
+    points: 155,
+    price: 14.8,
+    form: 8.3,
+    drivers: ['Zak O\'Sullivan', 'Paul Aron'],
+    logoUrl: 'https://via.placeholder.com/150?text=Prema',
+    color: '#ff0000'
+  }
+];
+
 const TeamSelectionScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { theme, isDarkMode } = useTheme();
   const { user } = useAuth();
+  
+  // Get active competition
+  const { activeCompetition } = useSelector(state => state.competitions);
   
   // Redux state
   const { drivers, loading: driversLoading } = useSelector(state => state.drivers);
@@ -49,12 +165,16 @@ const TeamSelectionScreen = ({ navigation }) => {
   const [sortOption, setSortOption] = useState('price-desc');
   const [selectionTab, setSelectionTab] = useState(0); // 0 = drivers, 1 = constructors
   
-  // Fetch data on mount and when user changes
+  // Fetch data on mount and when user or competition changes
   useEffect(() => {
-    dispatch(fetchDrivers());
-    dispatch(fetchConstructors());
+    // For F1, use API data
+    if (!activeCompetition || activeCompetition.id === 'f1-2024') {
+      dispatch(fetchDrivers());
+      dispatch(fetchConstructors());
+    }
+    
     dispatch(fetchUserTeam());
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, activeCompetition?.id]);
   
   // If user has a team, load it into the editor
   useEffect(() => {
@@ -78,10 +198,27 @@ const TeamSelectionScreen = ({ navigation }) => {
     }
   }, [userTeam, dispatch]);
   
-  // Update display drivers when drivers change or sort option changes
+  // Update display drivers based on active competition
   useEffect(() => {
-    if (drivers && drivers.length > 0) {
-      const sortedDrivers = [...drivers].sort((a, b) => {
+    let competitionDrivers = [];
+    
+    if (activeCompetition) {
+      switch (activeCompetition.id) {
+        case 'f2-2024':
+          competitionDrivers = mockF2Drivers;
+          break;
+        case 'f3-2024':
+          competitionDrivers = mockF3Drivers;
+          break;
+        default:
+          competitionDrivers = drivers;
+      }
+    } else {
+      competitionDrivers = drivers;
+    }
+    
+    if (competitionDrivers && competitionDrivers.length > 0) {
+      const sortedDrivers = [...competitionDrivers].sort((a, b) => {
         switch (sortOption) {
           case 'price-asc':
             return a.price - b.price;
@@ -98,12 +235,29 @@ const TeamSelectionScreen = ({ navigation }) => {
       
       setDisplayDrivers(sortedDrivers);
     }
-  }, [drivers, sortOption]);
+  }, [drivers, sortOption, activeCompetition]);
   
-  // Update display constructors when constructors change or sort option changes
+  // Update display constructors based on active competition
   useEffect(() => {
-    if (constructors && constructors.length > 0) {
-      const sortedConstructors = [...constructors].sort((a, b) => {
+    let competitionConstructors = [];
+    
+    if (activeCompetition) {
+      switch (activeCompetition.id) {
+        case 'f2-2024':
+          competitionConstructors = mockF2Constructors;
+          break;
+        case 'f3-2024':
+          competitionConstructors = mockF3Constructors;
+          break;
+        default:
+          competitionConstructors = constructors;
+      }
+    } else {
+      competitionConstructors = constructors;
+    }
+    
+    if (competitionConstructors && competitionConstructors.length > 0) {
+      const sortedConstructors = [...competitionConstructors].sort((a, b) => {
         switch (sortOption) {
           case 'price-asc':
             return a.price - b.price;
@@ -119,14 +273,8 @@ const TeamSelectionScreen = ({ navigation }) => {
       });
       
       setDisplayConstructors(sortedConstructors);
-    } else {
-      console.log('No constructors data available');
     }
-  }, [constructors, sortOption]);
-
-  useEffect(() => {
-    console.log('Constructor state:', constructors);
-  }, [constructors]);
+  }, [constructors, sortOption, activeCompetition]);
   
   // Calculate remaining budget when selected drivers or constructor changes
   useEffect(() => {
@@ -137,8 +285,6 @@ const TeamSelectionScreen = ({ navigation }) => {
   
   // Handle driver selection
   const handleDriverSelection = (driver) => {
-    console.log('Selecting driver:', driver.id);
-    console.log('Current team:', selectedDrivers.map(d => d.id));
     // Check if driver is already selected - handle both id and _id
     const isSelected = selectedDrivers.some(d => 
       (d.id && driver.id && d.id === driver.id) || 
@@ -246,7 +392,7 @@ const TeamSelectionScreen = ({ navigation }) => {
     
     Alert.alert(
       'Team Saved',
-      'Your fantasy F1 team has been saved successfully!',
+      'Your fantasy team has been saved successfully!',
       [{ text: 'OK' }]
     );
   };
@@ -262,13 +408,18 @@ const TeamSelectionScreen = ({ navigation }) => {
     // navigation.navigate('ConstructorDetail', { constructorId });
     
     // For now, just show basic info
-    const constructor = constructors.find(c => c.id === constructorId);
+    const constructor = displayConstructors.find(c => c.id === constructorId);
     if (constructor) {
       Alert.alert(
         constructor.name,
         `Drivers: ${constructor.drivers.join(', ')}\nPoints: ${constructor.points}\nForm: ${constructor.form}/10\nPrice: $${constructor.price}M`
       );
     }
+  };
+  
+  // Get competition series name
+  const getCompetitionName = () => {
+    return activeCompetition ? activeCompetition.name : 'F1';
   };
   
   // Show loading indicator while fetching data
@@ -287,7 +438,7 @@ const TeamSelectionScreen = ({ navigation }) => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Build Your F1 Dream Team</Text>
+        <Text style={styles.title}>Build Your {getCompetitionName()} Dream Team</Text>
       </View>
       
       <ScrollView style={styles.scrollContainer}>
@@ -333,34 +484,38 @@ const TeamSelectionScreen = ({ navigation }) => {
         {selectionTab === 0 ? (
           // Drivers Tab
           <>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Drivers</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Available {getCompetitionName()} Drivers
+            </Text>
             {displayDrivers.map(driver => (
               <DriverCard 
-              key={driver._id || driver.id}
-              driver={driver}
-              isSelected={selectedDrivers.some(d => 
-                (d.id && driver.id && d.id === driver.id) || 
-                (d._id && driver._id && d._id === driver._id)
-              )}
-              onPress={() => handleDriverSelection(driver)}
-              onViewDetails={() => handleViewDriverDetails(driver._id || driver.id)}
-            />
+                key={driver._id || driver.id}
+                driver={driver}
+                isSelected={selectedDrivers.some(d => 
+                  (d.id && driver.id && d.id === driver.id) || 
+                  (d._id && driver._id && d._id === driver._id)
+                )}
+                onPress={() => handleDriverSelection(driver)}
+                onViewDetails={() => handleViewDriverDetails(driver._id || driver.id)}
+              />
             ))}
           </>
         ) : (
           // Constructors Tab
           <>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Constructors</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Available {getCompetitionName()} Constructors
+            </Text>
             {displayConstructors.map(constructor => (
               <ConstructorCard 
-              key={constructor.id}
-              constructor={constructor}
-              isSelected={selectedConstructor && 
-                ((selectedConstructor.id && constructor.id && selectedConstructor.id === constructor.id) || 
-                 (selectedConstructor._id && constructor._id && selectedConstructor._id === constructor._id))}
-              onPress={() => handleConstructorSelection(constructor)}
-              onViewDetails={() => handleViewConstructorDetails(constructor.id)}
-            />
+                key={constructor.id || constructor._id}
+                constructor={constructor}
+                isSelected={selectedConstructor && 
+                  ((selectedConstructor.id && constructor.id && selectedConstructor.id === constructor.id) || 
+                   (selectedConstructor._id && constructor._id && selectedConstructor._id === constructor._id))}
+                onPress={() => handleConstructorSelection(constructor)}
+                onViewDetails={() => handleViewConstructorDetails(constructor.id || constructor._id)}
+              />
             ))}
           </>
         )}

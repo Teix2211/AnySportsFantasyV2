@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { format } from 'date-fns';
 import { useTheme } from '../../context/ThemeContext';
 
-const RaceCard = ({ race, onPress }) => {
+const RaceCard = ({ race, onPress, seriesColor = '#e10600' }) => {
   const { theme, isDarkMode } = useTheme();
   const raceDate = new Date(race.date);
   const isPastRace = raceDate < new Date();
@@ -20,6 +20,11 @@ const RaceCard = ({ race, onPress }) => {
       ]} 
       onPress={onPress}
     >
+      {/* Series indicator */}
+      <View style={[styles.seriesIndicator, { backgroundColor: seriesColor }]}>
+        <Text style={styles.seriesText}>{race.series}</Text>
+      </View>
+      
       <View style={[styles.dateContainer, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f0f0f0' }]}>
         <Text style={[styles.day, { color: theme.text }]}>{format(raceDate, 'd')}</Text>
         <Text style={[styles.month, { color: theme.textSecondary }]}>{format(raceDate, 'MMM')}</Text>
@@ -59,6 +64,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+    position: 'relative',
+  },
+  seriesIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderTopLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    zIndex: 1,
+  },
+  seriesText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   dateContainer: {
     width: 50,

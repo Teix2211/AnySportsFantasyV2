@@ -1,33 +1,34 @@
+// src/navigation/LeaderboardNavigator.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import RaceScheduleScreen from '../screens/race-schedule/RaceScheduleScreen';
-import StandingsScreen from '../screens/race-schedule/StandingsScreen';
+import LeaderboardScreen from '../screens/leaderboard/LeaderboardScreen';
+import TotalLeaderboardScreen from '../screens/leaderboard/TotalLeaderboardScreen';
 import SegmentedControl from '../components/common/SegmentedControl';
 import { useTheme } from '../context/ThemeContext';
 
-const RacesNavigator = () => {
+const LeaderboardNavigator = () => {
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const { theme, isDarkMode } = useTheme();
 
   const renderScreen = () => {
     switch (selectedTabIndex) {
       case 0:
-        return <RaceScheduleScreen />;
+        return <TotalLeaderboardScreen />;
       case 1:
-        return <StandingsScreen />;
+        return <LeaderboardScreen />;
       default:
-        return <RaceScheduleScreen />;
+        return <TotalLeaderboardScreen />;
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Schedule</Text>
+        <Text style={styles.title}>Leaderboards</Text>
       </View>
       <View style={[styles.tabContainer, { backgroundColor: theme.card }]}>
         <SegmentedControl
-          values={['Schedule', 'Standings']}
+          values={['Total Points', 'By Competition']}
           selectedIndex={selectedTabIndex}
           onChange={setSelectedTabIndex}
         />
@@ -60,4 +61,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RacesNavigator;
+export default LeaderboardNavigator;

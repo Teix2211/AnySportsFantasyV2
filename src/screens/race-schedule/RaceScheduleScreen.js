@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRaces, setCurrentSeason } from '../../store/actions/raceActions';
@@ -8,40 +8,135 @@ import LoadingIndicator from '../../components/common/LoadingIndicator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 
+// Sample mock data for F2, F3 races
+const mockF2Races = [
+  {
+    id: 'f2-2024-01',
+    name: 'Bahrain F2 Feature Race',
+    circuit: 'Bahrain International Circuit',
+    location: 'Sakhir, Bahrain',
+    date: '2024-03-02T13:00:00Z',
+    series: 'F2'
+  },
+  {
+    id: 'f2-2024-02',
+    name: 'Saudi Arabian F2 Feature Race',
+    circuit: 'Jeddah Corniche Circuit',
+    location: 'Jeddah, Saudi Arabia',
+    date: '2024-03-09T15:00:00Z',
+    series: 'F2'
+  },
+  {
+    id: 'f2-2024-03',
+    name: 'Australian F2 Feature Race',
+    circuit: 'Albert Park Circuit',
+    location: 'Melbourne, Australia',
+    date: '2024-03-24T04:00:00Z',
+    series: 'F2'
+  }
+];
+
+const mockF3Races = [
+  {
+    id: 'f3-2024-01',
+    name: 'Bahrain F3 Feature Race',
+    circuit: 'Bahrain International Circuit',
+    location: 'Sakhir, Bahrain',
+    date: '2024-03-02T10:00:00Z',
+    series: 'F3'
+  },
+  {
+    id: 'f3-2024-02',
+    name: 'Saudi Arabian F3 Feature Race',
+    circuit: 'Jeddah Corniche Circuit',
+    location: 'Jeddah, Saudi Arabia',
+    date: '2024-03-09T12:00:00Z',
+    series: 'F3'
+  },
+  {
+    id: 'f3-2024-04',
+    name: 'Imola F3 Feature Race',
+    circuit: 'Autodromo Enzo e Dino Ferrari',
+    location: 'Imola, Italy',
+    date: '2024-05-19T08:30:00Z',
+    series: 'F3'
+  }
+];
+
 const RaceScheduleScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { theme, isDarkMode } = useTheme();
-  const { races, loading, currentSeason, availableSeasons } = useSelector(state => state.races);
-  const [showSeasonPicker, setShowSeasonPicker] = useState(false);
   
+  const { races, loading: racesLoading, currentSeason, availableSeasons } = useSelector(state => state.races);
+  const { competitions } = useSelector(state => state.competitions);
+  
+  const [refreshing, setRefreshing] = useState(false);
+  const [showSeasonPicker, setShowSeasonPicker] = useState(false);
+  const [allRaces, setAllRaces] = useState([]);
+  
+  // Fetch F1 races from the API
   useEffect(() => {
     dispatch(fetchRaces(currentSeason));
   }, [currentSeason, dispatch]);
   
-  const handleRacePress = (raceId) => {
-    navigation.navigate('RaceDetail', { raceId });
-  };
+  // Combine races from all series
+  useEffect(() => {
+    if (races) {
+      // Add series indicator to F1 races
+      const f1Races = races.map(race => ({
+        ...race,
+        series: 'F1'
+      }));
+      
+      // Combine all races and sort by date
+      const combinedRaces = [...f1Races, ...mockF2Races, ...mockF3Races].sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+      
+      setAllRaces(combinedRaces);
+    }
+  }, [races]);
   
   const handleSeasonChange = (season) => {
     dispatch(setCurrentSeason(season));
     setShowSeasonPicker(false);
   };
   
-  if (loading) {
+  const handleRacePress = (raceId) => {
+    navigation.navigate('RaceDetail', { raceId });
+  };
+  
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    dispatch(fetchRaces(currentSeason));
+    setTimeout(() => setRefreshing(false), 500);
+  }, [currentSeason, dispatch]);
+  
+  if (racesLoading && !refreshing && allRaces.length === 0) {
     return <LoadingIndicator />;
   }
   
   // Split races into past, next, and upcoming
   const currentDate = new Date();
-  const pastRaces = races.filter(race => new Date(race.date) < currentDate)
+  const pastRaces = allRaces.filter(race => new Date(race.date) < currentDate)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   
-  const upcomingRaces = races.filter(race => new Date(race.date) >= currentDate)
+  const upcomingRaces = allRaces.filter(race => new Date(race.date) >= currentDate)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   
   const nextRace = upcomingRaces.length > 0 ? [upcomingRaces[0]] : [];
   const futureRaces = upcomingRaces.slice(1);
+  
+  // Get series color
+  const getSeriesColor = (series) => {
+    switch(series) {
+      case 'F1': return '#e10600'; // F1 red
+      case 'F2': return '#0090d0'; // F2 blue
+      case 'F3': return '#f8bc00'; // F3 yellow
+      default: return '#777777';
+    }
+  };
   
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -87,7 +182,25 @@ const RaceScheduleScreen = () => {
         )}
       </View>
       
-      {races.length > 0 ? (
+      <View style={styles.legendContainer}>
+        <Text style={[styles.legendTitle, { color: theme.text }]}>Racing Series:</Text>
+        <View style={styles.legendItems}>
+          <View style={styles.legendItem}>
+            <View style={[styles.seriesIndicator, { backgroundColor: getSeriesColor('F1') }]} />
+            <Text style={[styles.legendText, { color: theme.text }]}>Formula 1</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.seriesIndicator, { backgroundColor: getSeriesColor('F2') }]} />
+            <Text style={[styles.legendText, { color: theme.text }]}>Formula 2</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.seriesIndicator, { backgroundColor: getSeriesColor('F3') }]} />
+            <Text style={[styles.legendText, { color: theme.text }]}>Formula 3</Text>
+          </View>
+        </View>
+      </View>
+      
+      {allRaces.length > 0 ? (
         <FlatList
           data={[
             { title: 'NEXT RACE', data: nextRace },
@@ -103,6 +216,7 @@ const RaceScheduleScreen = () => {
                     <RaceCard 
                       key={race.id} 
                       race={race} 
+                      seriesColor={getSeriesColor(race.series)}
                       onPress={() => handleRacePress(race.id)}
                     />
                   ))}
@@ -112,6 +226,14 @@ const RaceScheduleScreen = () => {
           )}
           keyExtractor={(item) => item.title}
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              colors={['#e10600']}
+              tintColor={theme.primary}
+            />
+          }
         />
       ) : (
         <View style={styles.noDataContainer}>
@@ -166,6 +288,34 @@ const styles = StyleSheet.create({
   seasonOptionText: {
     fontSize: 14,
     color: '#333',
+  },
+  legendContainer: {
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  legendTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  legendItems: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+    marginBottom: 5,
+  },
+  seriesIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 5,
+  },
+  legendText: {
+    fontSize: 12,
   },
   listContent: {
     padding: 10,

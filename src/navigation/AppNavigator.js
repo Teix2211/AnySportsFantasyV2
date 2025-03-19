@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useSelector } from 'react-redux';
 
 // Auth Context
 import { useAuth } from '../context/AuthContext';
@@ -16,10 +17,12 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import TeamSelectionScreen from '../screens/team-selection/TeamSelectionScreen';
 import RacesNavigator from './RacesNavigator';
-import LeaderboardScreen from '../screens/leaderboard/LeaderboardScreen';
+import LeaderboardNavigator from './LeaderboardNavigator';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import RaceDetailScreen from '../screens/race-schedule/RaceDetailScreen';
 import DriverDetailScreen from '../screens/team-selection/DriverDetailScreen';
+import CompetitionSelectorScreen from '../screens/competitions/CompetitionSelectorScreen';
+import CompetitionLocked from '../screens/competitions/CompetitionLocked';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,6 +30,10 @@ const Tab = createBottomTabNavigator();
 // Main tab navigator
 const MainTabNavigator = () => {
   const { theme, isDarkMode } = useTheme();
+  const { activeCompetition } = useSelector(state => state.competitions);
+  
+  // Component to show when competition is locked
+  const LockedScreen = () => <CompetitionLocked />;
   
   return (
     <Tab.Navigator
@@ -38,12 +45,14 @@ const MainTabNavigator = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'My Team') {
             iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'Races') {
-            iconName = focused ? 'flag' : 'flag-outline';
+          } else if (route.name === 'Schedule') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Leaderboard') {
             iconName = focused ? 'podium' : 'podium-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Competitions') {
+            iconName = focused ? 'trophy' : 'trophy-outline';
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -58,9 +67,22 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="My Team" component={TeamSelectionScreen} />
-      <Tab.Screen name="Races" component={RacesNavigator} />
-      <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
+      <Tab.Screen name="Competitions" component={CompetitionSelectorScreen} />
+      
+      {/* My Team tab - show locked screen if no competition selected */}
+      <Tab.Screen 
+        name="My Team" 
+        component={activeCompetition ? TeamSelectionScreen : LockedScreen} 
+        options={{
+          tabBarBadge: !activeCompetition ? '🔒' : null,
+          tabBarBadgeStyle: { backgroundColor: 'transparent' }
+        }}
+      />
+      
+      {/* Schedule tab (formerly Races) - always show races navigator */}
+      <Tab.Screen name="Schedule" component={RacesNavigator} />
+      
+      <Tab.Screen name="Leaderboard" component={LeaderboardNavigator} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -71,7 +93,6 @@ const AppNavigator = () => {
   const { isAuthenticated, loading } = useAuth();
   const { theme } = useTheme();
   
-  // Show loading screen while checking authentication
   if (loading) {
     return (
       <View style={{ 

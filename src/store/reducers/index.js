@@ -7,6 +7,7 @@ import racesReducer from './raceReducer';
 import teamReducer from './teamReducer';
 import leaderboardReducer from './leaderboardReducer';
 import newsReducer from './newsReducer';
+import competitionReducer from './competitionReducer';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   team: teamReducer,
   leaderboard: leaderboardReducer,
   news: newsReducer,
+  competitions: competitionReducer,
 });
 
 export default rootReducer;
